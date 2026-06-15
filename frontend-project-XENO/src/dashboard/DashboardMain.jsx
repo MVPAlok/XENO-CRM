@@ -116,7 +116,23 @@ export default function DashboardMain({ user, onBack }) {
     try {
       const data = await workspaceAPI.list();
       if (data.success) {
-        const list = data.workspaces || [];
+        let list = data.workspaces || [];
+        if (list.length === 0) {
+          try {
+            const createData = await workspaceAPI.create({
+              brandName: "My Workspace",
+              industry: "Other",
+              businessType: "Other",
+              primaryChannel: "Email",
+              monthlyCustomers: "0-1000"
+            });
+            if (createData.success && createData.workspace) {
+              list = [createData.workspace];
+            }
+          } catch (createErr) {
+            console.error('Failed auto-creating default workspace', createErr);
+          }
+        }
         setWorkspaces(list);
         setActiveWorkspaceId((prev) => {
           if (preferId && list.some((w) => w.id === preferId)) return preferId;
@@ -497,15 +513,7 @@ export default function DashboardMain({ user, onBack }) {
     );
   }
 
-  if (workspaces.length === 0) {
-    return (
-      <OnboardingWizard 
-        onComplete={handleOnboardingComplete}
-        isSubmitting={isOnboardingSubmitting}
-        error={onboardingError}
-      />
-    );
-  }
+
 
   const activeWorkspace = workspaces.find(w => w.id === activeWorkspaceId) || workspaces[0];
 
