@@ -1,0 +1,1632 @@
+import React, { useEffect, useRef, useState } from 'react';
+import * as THREE from 'three';
+import Lenis from 'lenis';
+import heroVideo from './assets/Create_a_premium_cinematic_Saa.mp4';
+import Logo from './components/Logo';
+
+export default function LandingPage({ onLaunch }) {
+  const threeContainerRef = useRef(null);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [activeSegment, setActiveSegment] = useState('vip');
+  const [selectedCopilotStep, setSelectedCopilotStep] = useState(1);
+  const [simulatorStep, setSimulatorStep] = useState('sent');
+
+  // New states for Section 1 (Intelligence Core) & Section 2 (Ecosystem Orbital Layout)
+  const [intelligenceCoreIndex, setIntelligenceCoreIndex] = useState(0);
+  const [activeEcosystemNode, setActiveEcosystemNode] = useState(0);
+  const [hoveredEcosystemNode, setHoveredEcosystemNode] = useState(null);
+  const [hoveredIntelligenceCard, setHoveredIntelligenceCard] = useState(null);
+
+  const intelligenceMessages = [
+    "Calculating CLV...",
+    "Detecting Churn Risk...",
+    "Building Cohorts...",
+    "Predicting Conversions...",
+    "Finding VIP Customers...",
+    "Analyzing Revenue Potential..."
+  ];
+
+  const ecosystemNodes = [
+    { id: 0, label: "Customer Data", desc: "25,432 Profiles", icon: "database", angle: 0, color: "text-blue-500", bg: "bg-blue-50/50", border: "border-blue-100" },
+    { id: 1, label: "AI Analysis", desc: "94% Accuracy", icon: "psychology", angle: 45, color: "text-indigo-500", bg: "bg-indigo-50/50", border: "border-indigo-100" },
+    { id: 2, label: "Audience Discovery", desc: "6 Active Cohorts", icon: "groups", angle: 90, color: "text-emerald-500", bg: "bg-emerald-50/50", border: "border-emerald-100" },
+    { id: 3, label: "Campaign Engine", desc: "8 Active Campaigns", icon: "campaign", angle: 135, color: "text-amber-500", bg: "bg-amber-50/50", border: "border-amber-100" },
+    { id: 4, label: "Channel Simulator", desc: "1,280 Events", icon: "terminal", angle: 180, color: "text-purple-500", bg: "bg-purple-50/50", border: "border-purple-100" },
+    { id: 5, label: "Revenue Attribution", desc: "₹351,000 Generated", icon: "query_stats", angle: 225, color: "text-pink-500", bg: "bg-pink-50/50", border: "border-pink-100" },
+    { id: 6, label: "Analytics", desc: "12.4% Conversion", icon: "insights", angle: 270, color: "text-teal-500", bg: "bg-teal-50/50", border: "border-teal-100" },
+    { id: 7, label: "Optimization Engine", desc: "Closed Loop", icon: "loop", angle: 315, color: "text-cyan-500", bg: "bg-cyan-50/50", border: "border-cyan-100" }
+  ];
+
+  // Interactive segments data matching product capabilities
+  const segmentsData = {
+    vip: {
+      title: "VIP Customers",
+      icon: "workspace_premium",
+      count: "1,245 Customers",
+      rev: "₹450,000 Opportunity",
+      conversion: "24.6% Exp. Conv.",
+      confidence: "98% AI Confidence",
+      campaign: "Exclusive WhatsApp Early-Access Invite",
+      desc: "Top 5% of your customer base by Lifetime Value (LTV). Dispatched via high-engagement channels to protect loyalty."
+    },
+    inactive: {
+      title: "Inactive Customers",
+      icon: "snooze",
+      count: "5,820 Customers",
+      rev: "₹180,000 Opportunity",
+      conversion: "8.2% Exp. Conv.",
+      confidence: "91% AI Confidence",
+      campaign: "Win-Back Email with Dynamic Offer Code",
+      desc: "Users who haven't made a purchase in over 60 days. Targeted with dynamic re-engagement triggers."
+    },
+    recent: {
+      title: "Recent Buyers",
+      icon: "shopping_basket",
+      count: "3,110 Customers",
+      rev: "₹120,000 Opportunity",
+      conversion: "18.4% Exp. Conv.",
+      confidence: "95% AI Confidence",
+      campaign: "WhatsApp Next-Order Discount Incentive",
+      desc: "Purchased within the last 7 days. High affinity for immediate follow-up cross-sell recommendations."
+    },
+    frequent: {
+      title: "Frequent Shoppers",
+      icon: "repeat",
+      count: "2,480 Customers",
+      rev: "₹310,000 Opportunity",
+      conversion: "21.1% Exp. Conv.",
+      confidence: "97% AI Confidence",
+      campaign: "RCS Loyalty Rewards Progression Teaser",
+      desc: "Users exhibiting consistent purchase frequency. Perfect candidates for tiered loyalty upsells."
+    },
+    coupon: {
+      title: "Coupon Sensitive Customers",
+      icon: "percent",
+      count: "4,150 Customers",
+      rev: "₹95,000 Opportunity",
+      conversion: "14.8% Exp. Conv.",
+      confidence: "88% AI Confidence",
+      campaign: "SMS Flash Sale with Expiry Countdown",
+      desc: "Only convert when discount codes are present. AI optimizes discount threshold to preserve margin."
+    },
+    atrisk: {
+      title: "At Risk Customers",
+      icon: "warning",
+      count: "1,940 Customers",
+      rev: "₹240,000 Opportunity",
+      conversion: "12.7% Exp. Conv.",
+      confidence: "94% AI Confidence",
+      campaign: "Personalized Customer Care Support Survey",
+      desc: "Showing sudden decline in shopping frequency and intervals. Flagged for retention."
+    }
+  };
+
+  useEffect(() => {
+    const lenis = new Lenis({
+      duration: 1.2,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      smooth: true,
+    });
+
+    function raf(time) {
+      lenis.raf(time);
+      requestAnimationFrame(raf);
+    }
+
+    requestAnimationFrame(raf);
+    
+    return () => {
+      lenis.destroy();
+    }
+  }, []);
+
+  // Interval timers for visual elements
+  useEffect(() => {
+    const coreInterval = setInterval(() => {
+      setIntelligenceCoreIndex((prev) => (prev + 1) % intelligenceMessages.length);
+    }, 2800);
+
+    return () => clearInterval(coreInterval);
+  }, []);
+
+  useEffect(() => {
+    if (hoveredEcosystemNode !== null) return;
+    const ecosystemInterval = setInterval(() => {
+      setActiveEcosystemNode((prev) => (prev + 1) % 9); // Includes 8 nodes + 8 (Brain)
+    }, 2200);
+
+    return () => clearInterval(ecosystemInterval);
+  }, [hoveredEcosystemNode]);
+
+  useEffect(() => {
+    const revealElements = document.querySelectorAll('.reveal, .reveal-fly');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('active');
+        }
+      });
+    }, { threshold: 0.1 });
+
+    revealElements.forEach(el => observer.observe(el));
+
+    const handleScroll = () => {
+      const header = document.querySelector('header');
+      if (header) {
+        if (window.scrollY > 20) {
+          header.classList.add('py-sm', 'shadow-md');
+          header.classList.remove('py-md', 'shadow-sm');
+        } else {
+          header.classList.add('py-md', 'shadow-sm');
+          header.classList.remove('py-sm', 'shadow-md');
+        }
+      }
+    };
+    window.addEventListener('scroll', handleScroll);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!threeContainerRef.current) return;
+    const container = threeContainerRef.current;
+    
+    while (container.firstChild) {
+      container.removeChild(container.firstChild);
+    }
+
+    const width = container.clientWidth || window.innerWidth;
+    const height = container.clientHeight || window.innerHeight;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+    renderer.setSize(width, height);
+    container.appendChild(renderer.domElement);
+
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+    scene.add(ambientLight);
+    const pointLight = new THREE.PointLight(0x4f46e5, 1);
+    pointLight.position.set(5, 5, 5);
+    scene.add(pointLight);
+
+    const group = new THREE.Group();
+    const geometry = new THREE.BoxGeometry(2, 0.1, 1.5);
+    const material = new THREE.MeshPhongMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.6,
+      shininess: 100,
+      specular: 0x4f46e5
+    });
+
+    for (let i = 0; i < 5; i++) {
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.position.y = (i - 2) * 0.6;
+      mesh.rotation.y = Math.PI / 4;
+      mesh.rotation.x = -Math.PI / 8;
+      group.add(mesh);
+
+      const edges = new THREE.EdgesGeometry(geometry);
+      const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0x4f46e5, transparent: true, opacity: 0.3 }));
+      mesh.add(line);
+    }
+
+    scene.add(group);
+    camera.position.z = 5;
+
+    let animationFrameId;
+
+    function animate() {
+      animationFrameId = requestAnimationFrame(animate);
+      group.rotation.y += 0.002;
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    const handleResize = () => {
+      const w = container.clientWidth || window.innerWidth;
+      const h = container.clientHeight || window.innerHeight;
+      renderer.setSize(w, h);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+    };
+
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      cancelAnimationFrame(animationFrameId);
+      if (renderer.domElement && container.contains(renderer.domElement)) {
+          container.removeChild(renderer.domElement);
+      }
+      renderer.dispose();
+      geometry.dispose();
+      material.dispose();
+    };
+  }, []);
+
+  return (
+    <div className="bg-[#fcfcff] text-on-background font-body-md overflow-hidden">
+      
+      {/* Dynamic styles to achieve Linear/Stripe style animations */}
+      <style>{`
+        @keyframes float-y {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-8px); }
+        }
+        @keyframes float-y-delayed {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(8px); }
+        }
+        @keyframes pulse-core {
+          0%, 100% { transform: scale(1); box-shadow: 0 0 15px rgba(79, 70, 229, 0.25); }
+          50% { transform: scale(1.04); box-shadow: 0 0 35px rgba(79, 70, 229, 0.5); }
+        }
+        @keyframes spin-clockwise {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        @keyframes spin-counter {
+          from { transform: rotate(360deg); }
+          to { transform: rotate(0deg); }
+        }
+        @keyframes dash-flow {
+          to {
+            stroke-dashoffset: -40px;
+          }
+        }
+        .animate-float {
+          animation: float-y 4s ease-in-out infinite;
+        }
+        .animate-float-delayed {
+          animation: float-y-delayed 4.5s ease-in-out infinite;
+        }
+        .animate-pulse-core {
+          animation: pulse-core 3s ease-in-out infinite;
+        }
+        .animate-spin-slow {
+          animation: spin-clockwise 20s linear infinite;
+        }
+        .animate-spin-counter {
+          animation: spin-counter 25s linear infinite;
+        }
+        .animate-dash {
+          animation: dash-flow 1.5s linear infinite;
+        }
+        .bg-grid-subtle {
+          background-image: radial-gradient(circle, rgba(99, 102, 241, 0.04) 1px, transparent 1px);
+          background-size: 24px 24px;
+        }
+        .noise-bg {
+          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3e%3cfilter id='noiseFilter'%3e%3cfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3e%3c/filter%3e%3crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.015'/%3e%3c/svg%3e");
+        }
+      `}</style>
+
+      {/* TopNavBar */}
+      <header className="fixed top-6 left-0 right-0 z-50 flex justify-center px-4 transition-all duration-300">
+        <div className="glass-nav rounded-2xl flex justify-between items-center w-full max-w-6xl px-6 py-3">
+          <div className="flex items-center gap-3">
+            <Logo className="h-9 w-9 drop-shadow-md" />
+            <span className="text-xl font-extrabold text-gray-900 tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-primary to-pink-500">Xeno AI</span>
+          </div>
+
+          {/* Modern Pill Navigation */}
+          <nav className="hidden md:flex items-center p-1.5 bg-white/40 border border-white/60 rounded-xl shadow-sm backdrop-blur-md">
+            <a className="px-5 py-2 rounded-lg bg-white shadow-sm text-primary font-bold text-sm transition-all" href="#">Product</a>
+            <a className="px-5 py-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-white/50 font-semibold text-sm transition-all" href="#intelligence">Intelligence</a>
+            <a className="px-5 py-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-white/50 font-semibold text-sm transition-all" href="#revenue">Revenue Loop</a>
+            <a className="px-5 py-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-white/50 font-semibold text-sm transition-all" href="#segments">Segments</a>
+            <a className="px-5 py-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-white/50 font-semibold text-sm transition-all" href="#simulation">Simulation</a>
+          </nav>
+
+          <div className="flex items-center gap-3">
+            <button onClick={onLaunch} className="hidden lg:block text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors mr-2">Log in</button>
+            <button onClick={onLaunch} className="hidden md:flex creative-btn px-6 py-2.5 rounded-xl font-bold text-sm items-center justify-center hover:scale-105 transition-all">
+              Launch AI Workspace
+            </button>
+            <button id="mobile-menu-btn" onClick={() => setIsMenuOpen(!isMenuOpen)} className="md:hidden flex items-center justify-center p-2.5 rounded-xl text-gray-700 hover:bg-gray-100 transition-colors bg-white/50 border border-gray-200/50 shadow-sm">
+              <span className="material-symbols-outlined text-[24px]">menu</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile Menu Overlay */}
+        <div id="mobile-menu" className={`fixed inset-x-0 top-[88px] bg-white/95 backdrop-blur-xl z-40 ${isMenuOpen ? "flex" : "hidden"} flex-col px-6 py-8 border-t border-gray-100 h-[calc(100vh-88px)] shadow-2xl`}>
+          <nav className="flex flex-col gap-6 text-lg font-bold text-gray-900">
+            <a href="#intelligence" className="hover:text-primary transition-colors flex justify-between items-center pb-4 border-b border-gray-100">Customer Intelligence <span className="material-symbols-outlined text-gray-400">chevron_right</span></a>
+            <a href="#revenue" className="hover:text-primary transition-colors flex justify-between items-center pb-4 border-b border-gray-100">Revenue Engine <span className="material-symbols-outlined text-gray-400">chevron_right</span></a>
+            <a href="#segments" className="hover:text-primary transition-colors flex justify-between items-center pb-4 border-b border-gray-100">Segments Discovery <span className="material-symbols-outlined text-gray-400">chevron_right</span></a>
+            <a href="#simulation" className="hover:text-primary transition-colors flex justify-between items-center pb-4 border-b border-gray-100">Simulation Engine <span className="material-symbols-outlined text-gray-400">chevron_right</span></a>
+            
+            <div className="mt-4 flex flex-col gap-4">
+              <button onClick={onLaunch} className="w-full py-3.5 rounded-xl font-bold text-gray-700 bg-gray-50 border border-gray-200">Log in</button>
+              <button onClick={onLaunch} className="w-full creative-btn py-3.5 rounded-xl font-bold text-white shadow-md">Launch AI Workspace</button>
+            </div>
+          </nav>
+        </div>
+      </header>
+
+      <main>
+        {/* Hero Section */}
+        <section className="relative min-h-[90vh] flex flex-col items-center justify-center pt-[140px] pb-xxl overflow-hidden bg-[#faf8ff] bg-grid-pattern">
+          {/* Organic Blobs Background */}
+          <div className="blob bg-indigo-400/40 w-[500px] h-[500px] rounded-full top-0 left-0 mix-blend-multiply"></div>
+          <div className="blob bg-pink-300/40 w-[600px] h-[600px] rounded-full top-20 right-10 mix-blend-multiply" style={{"animationDelay":"-5s"}}></div>
+          <div className="blob bg-emerald-200/40 w-[400px] h-[400px] rounded-full -bottom-20 left-1/3 mix-blend-multiply" style={{"animationDelay":"-10s"}}></div>
+
+          <div className="max-w-6xl mx-auto px-lg relative z-10 w-full flex flex-col items-center text-center">
+            <div className="relative z-20 flex flex-col items-center">
+              <h1 className="text-4xl lg:text-6xl font-black mb-6 tracking-tight leading-[1.1] text-gray-900 reveal max-w-4xl">
+                Upload Customer Data.<br />
+                <span className="hero-gradient-text">Discover Audiences.</span> Launch Campaigns.
+              </h1>
+
+              <p className="text-lg lg:text-xl text-gray-600 mb-10 max-w-3xl leading-relaxed reveal" style={{"transitionDelay":"100ms"}}>
+                Xeno AI acts as your AI-Native CRM. It ingests offline orders, runs advanced behavioral modeling, auto-clusters customers, generates personalized content, simulates delivery carrier pipes, and attributes revenue impact automatically.
+              </p>
+
+              <div className="flex flex-col sm:flex-row gap-4 mb-16 reveal justify-center" style={{"transitionDelay":"200ms"}}>
+                <button onClick={onLaunch} className="creative-btn px-8 py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2 hover:scale-[1.02] transition-all">
+                  Launch AI Workspace
+                </button>
+                <a href="#workflow" className="px-8 py-4 rounded-xl font-bold text-lg text-gray-700 bg-white/50 border border-gray-200 hover:bg-white/80 backdrop-blur-md transition-all shadow-sm flex items-center justify-center gap-2 hover:-translate-y-1">
+                  <span className="material-symbols-outlined">explore</span>
+                  See Workflow
+                </a>
+              </div>
+            </div>
+
+            {/* Video Mockup Frame */}
+            <div className="relative w-full max-w-4xl flex items-center justify-center mt-4 min-h-[450px] reveal z-20">
+              <div className="relative z-10 w-full floating-2">
+                <div className="absolute -inset-4 bg-gradient-to-tr from-primary to-pink-400 rounded-3xl blur-2xl opacity-20"></div>
+                <video 
+                  src={heroVideo}
+                  className="w-full h-auto rounded-3xl shadow-2xl border-4 border-white/40 object-cover aspect-video"
+                  autoPlay 
+                  loop 
+                  muted 
+                  playsInline
+                ></video>
+              </div>
+
+              {/* Floating Avatar 1 */}
+              <div className="absolute top-[5%] -left-[5%] z-20 reveal-fly" style={{'--fly-x': '-300px', '--fly-y': '-200px', '--fly-rot': '-180deg', transitionDelay: '300ms'}}>
+                  <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop" className="human-avatar w-20 h-20 floating-1 rounded-full object-cover border-2 border-white shadow-lg" alt="Creative Director" />
+              </div>
+
+              {/* Floating Avatar 2 */}
+              <div className="absolute bottom-[10%] -left-[2%] z-20 reveal-fly" style={{'--fly-x': '-250px', '--fly-y': '250px', '--fly-rot': '-90deg', transitionDelay: '500ms'}}>
+                  <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=200&auto=format&fit=crop" className="human-avatar w-16 h-16 floating-3 rounded-full object-cover border-2 border-white shadow-lg" alt="Marketing Lead" />
+              </div>
+
+              {/* Floating Avatar 3 */}
+              <div className="absolute top-[10%] -right-[8%] z-20 reveal-fly" style={{'--fly-x': '300px', '--fly-y': '-150px', '--fly-rot': '180deg', transitionDelay: '400ms'}}>
+                  <img src="https://images.unsplash.com/photo-1517841905240-472988babdf9?q=80&w=200&auto=format&fit=crop" className="human-avatar w-24 h-24 floating-2 rounded-full object-cover border-2 border-white shadow-lg" style={{animationDelay: '-2s'}} alt="Content Creator" />
+              </div>
+
+              {/* Glassmorphic UI Card */}
+              <div className="absolute bottom-[5%] -right-[8%] z-30 reveal-fly" style={{'--fly-x': '300px', '--fly-y': '300px', '--fly-rot': '45deg', transitionDelay: '600ms'}}>
+                  <div className="glass-card p-5 w-64 floating-1 bg-white/80 backdrop-blur-md rounded-2xl shadow-xl border border-white" style={{animationDelay: '-3s'}}>
+                      <div className="flex items-center gap-3 mb-3">
+                          <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600">
+                              <span className="material-symbols-outlined">favorite</span>
+                          </div>
+                          <div>
+                              <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">Campaign Emotion</p>
+                              <p className="text-sm font-black text-gray-900">Highly Engaging</p>
+                          </div>
+                      </div>
+                      <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
+                          <div className="bg-gradient-to-r from-green-400 to-emerald-500 w-[92%] h-full rounded-full"></div>
+                      </div>
+                  </div>
+              </div>
+
+              {/* AI Generation Card */}
+              <div className="absolute top-[40%] -left-[12%] z-30 reveal-fly hidden md:block" style={{'--fly-x': '-400px', '--fly-y': '0px', '--fly-rot': '-45deg', transitionDelay: '700ms'}}>
+                  <div className="glass-card p-4 w-56 floating-3 bg-white/80 backdrop-blur-md rounded-2xl shadow-xl border border-white">
+                      <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-pink-500 flex items-center justify-center text-white">
+                              <span className="material-symbols-outlined text-sm" style={{fontVariationSettings: "'FILL' 1"}}>auto_awesome</span>
+                          </div>
+                          <p className="text-sm font-bold text-gray-900 leading-tight">Generating assets...</p>
+                      </div>
+                  </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* SECTION 1 (Upgraded Customer Intelligence): CUSTOMER INTELLIGENCE ENGINE */}
+        <section id="intelligence" className="py-28 relative overflow-hidden bg-white bg-grid-subtle noise-bg">
+          {/* Subtle Ambient Blurred Gradient Orbs */}
+          <div className="absolute top-[20%] left-[10%] w-[350px] h-[350px] bg-indigo-400/5 rounded-full blur-[80px] pointer-events-none"></div>
+          <div className="absolute bottom-[20%] right-[10%] w-[400px] h-[400px] bg-pink-400/5 rounded-full blur-[90px] pointer-events-none"></div>
+
+          <div className="max-w-6xl mx-auto px-lg relative z-20">
+            <div className="text-center mb-20">
+              <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-indigo-50/60 rounded-full text-xs font-bold text-primary mb-4 border border-indigo-100/40 shadow-sm">
+                <span className="material-symbols-outlined text-[16px]">insights</span>
+                Data Processing Pipeline
+              </span>
+              <h2 className="text-4xl lg:text-5xl font-black tracking-tight text-gray-900 mb-4">
+                Customer Intelligence Engine
+              </h2>
+              <p className="text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed">
+                Turn raw customer and order data into actionable marketing opportunities.
+              </p>
+            </div>
+
+            {/* AI Processing Visualization Grid */}
+            <div className="grid lg:grid-cols-12 gap-8 items-center mb-20 relative">
+              
+              {/* LEFT SIDE: Floating Data Sources */}
+              <div className="lg:col-span-3 space-y-8 flex flex-col justify-center h-full relative z-25">
+                {/* Customers.csv Card */}
+                <div className="glass-card p-5 border border-indigo-100/60 shadow-lg relative rounded-2xl animate-float bg-white/85">
+                  <div className="absolute top-4 right-4 flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span className="text-[9px] text-emerald-600 font-bold uppercase tracking-wider">Uploaded</span>
+                  </div>
+                  <div className="w-12 h-12 rounded-xl bg-blue-50/50 border border-blue-100 flex items-center justify-center text-blue-500 mb-4 shadow-inner">
+                    <span className="material-symbols-outlined text-[24px]">database</span>
+                  </div>
+                  <h4 className="font-black text-gray-900 text-[15px] mb-1">Customers.csv</h4>
+                  <p className="text-2xl font-black text-primary">25,432</p>
+                  <p className="text-[11px] text-gray-400 font-bold uppercase tracking-wider mt-0.5">Active Customers</p>
+                </div>
+
+                {/* Orders.csv Card */}
+                <div className="glass-card p-5 border border-pink-100/60 shadow-lg relative rounded-2xl animate-float-delayed bg-white/85">
+                  <div className="absolute top-4 right-4 flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span className="text-[9px] text-emerald-600 font-bold uppercase tracking-wider">Uploaded</span>
+                  </div>
+                  <div className="w-12 h-12 rounded-xl bg-pink-50/50 border border-pink-100 flex items-center justify-center text-pink-500 mb-4 shadow-inner">
+                    <span className="material-symbols-outlined text-[24px]">shopping_bag</span>
+                  </div>
+                  <h4 className="font-black text-gray-900 text-[15px] mb-1">Orders.csv</h4>
+                  <p className="text-2xl font-black text-pink-500">58,201</p>
+                  <p className="text-[11px] text-gray-400 font-bold uppercase tracking-wider mt-0.5">Order logs mapped</p>
+                </div>
+              </div>
+
+              {/* FLOW LINES LAYER (SVG particle connections) */}
+              <div className="hidden lg:block absolute inset-0 pointer-events-none z-10 w-full h-full">
+                <svg className="w-full h-full" fill="none">
+                  {/* Left to Center paths */}
+                  <path id="path-customers" d="M 230 150 Q 320 180 430 250" stroke="#cbd5e1" strokeWidth="1.5" strokeDasharray="4 4" />
+                  <path d="M 230 150 Q 320 180 430 250" stroke="url(#flow-blue-pink)" strokeWidth="2.5" strokeDasharray="15 60" className="animate-dash" />
+
+                  <path id="path-orders" d="M 230 350 Q 320 320 430 250" stroke="#cbd5e1" strokeWidth="1.5" strokeDasharray="4 4" />
+                  <path d="M 230 350 Q 320 320 430 250" stroke="url(#flow-blue-pink)" strokeWidth="2.5" strokeDasharray="15 60" className="animate-dash" />
+
+                  {/* Center to Right paths */}
+                  <path d="M 570 250 L 800 110" stroke="#cbd5e1" strokeWidth="1.5" strokeDasharray="4 4" />
+                  <path d="M 570 250 L 800 110" stroke="url(#flow-pink-blue)" strokeWidth="2.5" strokeDasharray="12 50" className="animate-dash" />
+
+                  <path d="M 570 250 L 800 180" stroke="#cbd5e1" strokeWidth="1.5" strokeDasharray="4 4" />
+                  <path d="M 570 250 L 800 180" stroke="url(#flow-pink-blue)" strokeWidth="2.5" strokeDasharray="12 50" className="animate-dash" />
+
+                  <path d="M 570 250 L 800 250" stroke="#cbd5e1" strokeWidth="1.5" strokeDasharray="4 4" />
+                  <path d="M 570 250 L 800 250" stroke="url(#flow-pink-blue)" strokeWidth="2.5" strokeDasharray="12 50" className="animate-dash" />
+
+                  <path d="M 570 250 L 800 320" stroke="#cbd5e1" strokeWidth="1.5" strokeDasharray="4 4" />
+                  <path d="M 570 250 L 800 320" stroke="url(#flow-pink-blue)" strokeWidth="2.5" strokeDasharray="12 50" className="animate-dash" />
+
+                  <path d="M 570 250 L 800 390" stroke="#cbd5e1" strokeWidth="1.5" strokeDasharray="4 4" />
+                  <path d="M 570 250 L 800 390" stroke="url(#flow-pink-blue)" strokeWidth="2.5" strokeDasharray="12 50" className="animate-dash" />
+
+                  <defs>
+                    <linearGradient id="flow-blue-pink" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#3b82f6" />
+                      <stop offset="50%" stopColor="#a855f7" />
+                      <stop offset="100%" stopColor="#ec4899" />
+                    </linearGradient>
+                    <linearGradient id="flow-pink-blue" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#ec4899" />
+                      <stop offset="50%" stopColor="#a855f7" />
+                      <stop offset="100%" stopColor="#06b6d4" />
+                    </linearGradient>
+                  </defs>
+                </svg>
+              </div>
+
+              {/* CENTER: AI Intelligence Core */}
+              <div className="lg:col-span-5 flex flex-col items-center justify-center relative z-20 h-full py-6">
+                <div 
+                  className="w-56 h-56 rounded-full flex flex-col items-center justify-center relative bg-white border border-indigo-50 shadow-2xl animate-pulse-core"
+                >
+                  {/* Rotating Gradient Rings */}
+                  <div className="absolute inset-[-6px] rounded-full border border-dashed border-indigo-400/30 animate-spin-slow"></div>
+                  <div className="absolute inset-[-14px] rounded-full border border-dashed border-pink-400/20 animate-spin-counter"></div>
+
+                  <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-primary/10 via-transparent to-pink-500/10 pointer-events-none"></div>
+
+                  <span className="material-symbols-outlined text-[36px] text-primary select-none animate-bounce" style={{fontVariationSettings: "'FILL' 1"}}>auto_awesome</span>
+                  <span className="text-xs font-black tracking-widest text-gray-900 uppercase mt-2">Xeno Intelligence</span>
+                  <span className="text-[10px] text-emerald-500 font-bold uppercase tracking-wider mt-0.5 flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-ping"></span> Live Processing
+                  </span>
+
+                  {/* Cycling Process Indicators */}
+                  <div className="h-5 overflow-hidden mt-4 text-center w-full px-4">
+                    <p className="text-[11px] font-bold text-indigo-600 uppercase tracking-wider transition-all duration-500">
+                      {intelligenceMessages[intelligenceCoreIndex]}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* RIGHT SIDE: Floating Output Cards */}
+              <div className="lg:col-span-4 space-y-4 flex flex-col justify-center h-full relative z-25">
+                
+                {/* VIP Customers */}
+                <div className="p-3 bg-white/90 backdrop-blur-md rounded-xl border border-indigo-50 shadow-md flex items-center justify-between hover:scale-105 transition-all duration-300">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-primary">
+                      <span className="material-symbols-outlined text-[18px]">stars</span>
+                    </div>
+                    <div>
+                      <h5 className="font-bold text-xs text-gray-900">VIP Customers</h5>
+                      <p className="text-[10px] text-gray-400">High LTV Segment</p>
+                    </div>
+                  </div>
+                  <span className="px-2.5 py-1 bg-indigo-50 text-primary rounded-lg text-[10px] font-bold">150 Found</span>
+                </div>
+
+                {/* Inactive Customers */}
+                <div className="p-3 bg-white/90 backdrop-blur-md rounded-xl border border-indigo-50 shadow-md flex items-center justify-between hover:scale-105 transition-all duration-300">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-500">
+                      <span className="material-symbols-outlined text-[18px]">snooze</span>
+                    </div>
+                    <div>
+                      <h5 className="font-bold text-xs text-gray-900">Inactive Customers</h5>
+                      <p className="text-[10px] text-gray-400">Churn Risk Cohort</p>
+                    </div>
+                  </div>
+                  <span className="px-2.5 py-1 bg-blue-50 text-blue-600 rounded-lg text-[10px] font-bold">324 Found</span>
+                </div>
+
+                {/* Revenue Opportunity */}
+                <div className="p-3 bg-white/90 backdrop-blur-md rounded-xl border border-indigo-50 shadow-md flex items-center justify-between hover:scale-105 transition-all duration-300">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-pink-50 flex items-center justify-center text-pink-500">
+                      <span className="material-symbols-outlined text-[18px]">payments</span>
+                    </div>
+                    <div>
+                      <h5 className="font-bold text-xs text-gray-900">Revenue Opportunity</h5>
+                      <p className="text-[10px] text-gray-400">Latent Cash Flow</p>
+                    </div>
+                  </div>
+                  <span className="px-2.5 py-1 bg-pink-50 text-pink-600 rounded-lg text-[10px] font-bold">₹120,000</span>
+                </div>
+
+                {/* Best Channel */}
+                <div className="p-3 bg-white/90 backdrop-blur-md rounded-xl border border-indigo-50 shadow-md flex items-center justify-between hover:scale-105 transition-all duration-300">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-500">
+                      <span className="material-symbols-outlined text-[18px]">chat</span>
+                    </div>
+                    <div>
+                      <h5 className="font-bold text-xs text-gray-900">Best Channel</h5>
+                      <p className="text-[10px] text-gray-400">Highest Deliverability</p>
+                    </div>
+                  </div>
+                  <span className="px-2.5 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-[10px] font-bold">WhatsApp</span>
+                </div>
+
+                {/* Expected ROI */}
+                <div className="p-3 bg-white/90 backdrop-blur-md rounded-xl border border-indigo-50 shadow-md flex items-center justify-between hover:scale-105 transition-all duration-300">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center text-amber-500">
+                      <span className="material-symbols-outlined text-[18px]">trending_up</span>
+                    </div>
+                    <div>
+                      <h5 className="font-bold text-xs text-gray-900">Expected ROI</h5>
+                      <p className="text-[10px] text-gray-400">Predictive Yield</p>
+                    </div>
+                  </div>
+                  <span className="px-2.5 py-1 bg-amber-50 text-amber-600 rounded-lg text-[10px] font-bold">4.8x ROI</span>
+                </div>
+
+              </div>
+            </div>
+
+            {/* BELOW AI CORE: Premium Intelligence Grid */}
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              
+              {/* CLV */}
+              <div 
+                onMouseEnter={() => setHoveredIntelligenceCard(0)}
+                onMouseLeave={() => setHoveredIntelligenceCard(null)}
+                className="p-6 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:border-indigo-100 transition-all duration-300 cursor-default"
+              >
+                <div className="flex justify-between items-start mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-primary">
+                    <span className="material-symbols-outlined text-[20px] transition-transform duration-500 hover:rotate-12">payments</span>
+                  </div>
+                  <span className="px-2 py-0.5 bg-indigo-50 text-primary text-[10px] font-bold rounded-md">+12.5% increase</span>
+                </div>
+                <h4 className="text-lg font-bold text-gray-900 mb-1">Customer Lifetime Value</h4>
+                <p className="text-2xl font-black text-gray-900 mb-2">₹8,450 <span className="text-xs text-gray-400 font-bold">Avg</span></p>
+                <div className="h-10 overflow-hidden">
+                  <p className={`text-xs text-gray-500 leading-relaxed transition-all duration-300 ${
+                    hoveredIntelligenceCard === 0 ? "text-indigo-600 font-semibold" : ""
+                  }`}>
+                    {hoveredIntelligenceCard === 0 
+                      ? "Used to identify high value segments." 
+                      : "Predict future transactions and lifetime returns automatically."}
+                  </p>
+                </div>
+              </div>
+
+              {/* Behavior Detection */}
+              <div 
+                onMouseEnter={() => setHoveredIntelligenceCard(1)}
+                onMouseLeave={() => setHoveredIntelligenceCard(null)}
+                className="p-6 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:border-pink-100 transition-all duration-300 cursor-default"
+              >
+                <div className="flex justify-between items-start mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-pink-50 flex items-center justify-center text-pink-500">
+                    <span className="material-symbols-outlined text-[20px] transition-transform duration-500 hover:scale-110">track_changes</span>
+                  </div>
+                  <span className="px-2 py-0.5 bg-pink-50 text-pink-500 text-[10px] font-bold rounded-md">Consistent</span>
+                </div>
+                <h4 className="text-lg font-bold text-gray-900 mb-1">Purchase Behavior Detection</h4>
+                <p className="text-2xl font-black text-gray-900 mb-2">2.4x <span className="text-xs text-gray-400 font-bold">Frequency</span></p>
+                <div className="h-10 overflow-hidden">
+                  <p className={`text-xs text-gray-500 leading-relaxed transition-all duration-300 ${
+                    hoveredIntelligenceCard === 1 ? "text-pink-600 font-semibold" : ""
+                  }`}>
+                    {hoveredIntelligenceCard === 1 
+                      ? "Logs coupon sensitivity and purchase intervals." 
+                      : "Logs recurring cycles, seasonal behavior, and category affinity."}
+                  </p>
+                </div>
+              </div>
+
+              {/* Churn Risk */}
+              <div 
+                onMouseEnter={() => setHoveredIntelligenceCard(2)}
+                onMouseLeave={() => setHoveredIntelligenceCard(null)}
+                className="p-6 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:border-emerald-100 transition-all duration-300 cursor-default"
+              >
+                <div className="flex justify-between items-start mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-500">
+                    <span className="material-symbols-outlined text-[20px] transition-transform duration-500 hover:scale-110">heart_broken</span>
+                  </div>
+                  <span className="px-2 py-0.5 bg-emerald-50 text-emerald-500 text-[10px] font-bold rounded-md">-1.8% Churn</span>
+                </div>
+                <h4 className="text-lg font-bold text-gray-900 mb-1">Churn Risk Prediction</h4>
+                <p className="text-2xl font-black text-gray-900 mb-2">4.2% <span className="text-xs text-gray-400 font-bold">Risk Rate</span></p>
+                <div className="h-10 overflow-hidden">
+                  <p className={`text-xs text-gray-500 leading-relaxed transition-all duration-300 ${
+                    hoveredIntelligenceCard === 2 ? "text-emerald-600 font-semibold" : ""
+                  }`}>
+                    {hoveredIntelligenceCard === 2 
+                      ? "Triggers re-engagement before users drop off." 
+                      : "Flags sudden decline in shopping frequency and intervals."}
+                  </p>
+                </div>
+              </div>
+
+              {/* VIP Customer Identification */}
+              <div 
+                onMouseEnter={() => setHoveredIntelligenceCard(3)}
+                onMouseLeave={() => setHoveredIntelligenceCard(null)}
+                className="p-6 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:border-amber-100 transition-all duration-300 cursor-default"
+              >
+                <div className="flex justify-between items-start mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-500">
+                    <span className="material-symbols-outlined text-[20px] transition-transform duration-500 hover:-translate-y-0.5">stars</span>
+                  </div>
+                  <span className="px-2 py-0.5 bg-amber-50 text-amber-500 text-[10px] font-bold rounded-md">48% Revenue</span>
+                </div>
+                <h4 className="text-lg font-bold text-gray-900 mb-1">VIP Identification</h4>
+                <p className="text-2xl font-black text-gray-900 mb-2">Top 5% <span className="text-xs text-gray-400 font-bold">Cohort</span></p>
+                <div className="h-10 overflow-hidden">
+                  <p className={`text-xs text-gray-500 leading-relaxed transition-all duration-300 ${
+                    hoveredIntelligenceCard === 3 ? "text-amber-600 font-semibold" : ""
+                  }`}>
+                    {hoveredIntelligenceCard === 3 
+                      ? "Exclusive campaign routing to high LTV buyers." 
+                      : "Isolate your highest spending advocates instantly."}
+                  </p>
+                </div>
+              </div>
+
+              {/* Channel Preference */}
+              <div 
+                onMouseEnter={() => setHoveredIntelligenceCard(4)}
+                onMouseLeave={() => setHoveredIntelligenceCard(null)}
+                className="p-6 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:border-purple-100 transition-all duration-300 cursor-default"
+              >
+                <div className="flex justify-between items-start mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center text-purple-500">
+                    <span className="material-symbols-outlined text-[20px]">chat</span>
+                  </div>
+                  <span className="px-2 py-0.5 bg-purple-50 text-purple-500 text-[10px] font-bold rounded-md">Best Channel</span>
+                </div>
+                <h4 className="text-lg font-bold text-gray-900 mb-1">Channel Preference</h4>
+                <p className="text-2xl font-black text-gray-900 mb-2">WhatsApp 72%</p>
+                <div className="h-10 overflow-hidden">
+                  <p className={`text-xs text-gray-500 leading-relaxed transition-all duration-300 ${
+                    hoveredIntelligenceCard === 4 ? "text-purple-600 font-semibold" : ""
+                  }`}>
+                    {hoveredIntelligenceCard === 4 
+                      ? "Selects pathways dynamically per customer." 
+                      : "Identify which channels convert best for each user."}
+                  </p>
+                </div>
+              </div>
+
+              {/* Revenue Opportunity Detection */}
+              <div 
+                onMouseEnter={() => setHoveredIntelligenceCard(5)}
+                onMouseLeave={() => setHoveredIntelligenceCard(null)}
+                className="p-6 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:border-teal-100 transition-all duration-300 cursor-default"
+              >
+                <div className="flex justify-between items-start mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center text-teal-500">
+                    <span className="material-symbols-outlined text-[20px] transition-transform duration-500 hover:rotate-12">monetization_on</span>
+                  </div>
+                  <span className="px-2 py-0.5 bg-teal-50 text-teal-500 text-[10px] font-bold rounded-md">Immediate Action</span>
+                </div>
+                <h4 className="text-lg font-bold text-gray-900 mb-1">Revenue Opportunity</h4>
+                <p className="text-2xl font-black text-gray-900 mb-2">₹120,000 <span className="text-xs text-gray-400 font-bold">Potential</span></p>
+                <div className="h-10 overflow-hidden">
+                  <p className={`text-xs text-gray-500 leading-relaxed transition-all duration-300 ${
+                    hoveredIntelligenceCard === 5 ? "text-teal-600 font-semibold" : ""
+                  }`}>
+                    {hoveredIntelligenceCard === 5 
+                      ? "Flags dormant cash-flows for activation." 
+                      : "Automatically flags dormant segments with high recovery probability."}
+                  </p>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </section>
+
+        {/* Traditional CRM vs AI-Native CRM */}
+        <section className="py-24 relative overflow-hidden bg-[#faf8ff] border-b border-gray-100">
+          <div className="max-w-6xl mx-auto px-lg">
+            <div className="text-center mb-16">
+              <h2 className="reveal text-4xl lg:text-5xl font-black mb-6 tracking-tight text-gray-900">
+                Traditional CRM vs. <span className="hero-gradient-text">AI-Native CRM</span>
+              </h2>
+              <p className="reveal text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
+                Traditional platforms act as static record stores. Xeno AI acts as a closed-loop customer intelligence and deployment engine.
+              </p>
+            </div>
+            <div className="grid md:grid-cols-2 gap-8 lg:gap-12 relative">
+              <div className="hidden md:block absolute top-1/2 left-1/2 w-32 h-1 bg-gradient-to-r from-gray-200 to-indigo-300 -translate-x-1/2 -translate-y-1/2 z-0"></div>
+              <div className="hidden md:flex absolute top-1/2 left-1/2 w-10 h-10 bg-white border border-gray-200 rounded-full -translate-x-1/2 -translate-y-1/2 z-10 items-center justify-center text-gray-400 shadow-sm">
+                <span className="material-symbols-outlined text-xl">compare_arrows</span>
+              </div>
+
+              {/* Traditional CRM */}
+              <div className="reveal p-8 rounded-[2rem] border border-gray-200 bg-white shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-48 h-48 bg-red-50 rounded-full blur-3xl -mr-16 -mt-16 opacity-50 group-hover:opacity-70 transition-opacity"></div>
+                <div className="flex items-center gap-4 mb-8 relative z-10">
+                  <div className="w-12 h-12 rounded-2xl bg-red-50 text-red-500 flex items-center justify-center border border-red-100 shadow-sm">
+                    <span className="material-symbols-outlined">close</span>
+                  </div>
+                  <span className="text-2xl font-bold text-gray-800 tracking-tight">Traditional CRM</span>
+                </div>
+                <ul className="space-y-4 relative z-10">
+                  <li className="flex items-start gap-4 p-4 rounded-2xl bg-gray-50 border border-gray-100 hover:bg-white hover:shadow-sm transition-all duration-300">
+                    <span className="flex-shrink-0 w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center text-xs font-bold text-gray-400">01</span>
+                    <span className="text-gray-600 font-medium pt-1">Static customer lists requiring manual filter queries</span>
+                  </li>
+                  <li className="flex items-start gap-4 p-4 rounded-2xl bg-gray-50 border border-gray-100 hover:bg-white hover:shadow-sm transition-all duration-300">
+                    <span className="flex-shrink-0 w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center text-xs font-bold text-gray-400">02</span>
+                    <span className="text-gray-600 font-medium pt-1">Manual segmentation based on static assumptions</span>
+                  </li>
+                  <li className="flex items-start gap-4 p-4 rounded-2xl bg-gray-50 border border-gray-100 hover:bg-white hover:shadow-sm transition-all duration-300">
+                    <span className="flex-shrink-0 w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center text-xs font-bold text-gray-400">03</span>
+                    <span className="text-gray-600 font-medium pt-1">Generic batch-and-blast marketing outreach</span>
+                  </li>
+                  <li className="flex items-start gap-4 p-4 rounded-2xl bg-gray-50 border border-gray-100 hover:bg-white hover:shadow-sm transition-all duration-300">
+                    <span className="flex-shrink-0 w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center text-xs font-bold text-gray-400">04</span>
+                    <span className="text-gray-600 font-medium pt-1">Limited revenue attribution or offline data merging</span>
+                  </li>
+                  <li className="flex items-start gap-4 p-4 rounded-2xl bg-gray-50 border border-gray-100 hover:bg-white hover:shadow-sm transition-all duration-300">
+                    <span className="flex-shrink-0 w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center text-xs font-bold text-gray-400">05</span>
+                    <span className="text-gray-600 font-medium pt-1">Disconnected systems for list building, email, and analytics</span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Xeno AI CRM */}
+              <div className="reveal p-8 rounded-[2rem] border border-indigo-100 bg-white shadow-xl relative overflow-hidden group hover:-translate-y-1 transition-all duration-300">
+                <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/50 via-white to-pink-50/50 opacity-80"></div>
+                <div className="absolute -top-24 -right-24 w-64 h-64 bg-gradient-to-br from-primary to-pink-400 rounded-full blur-3xl opacity-15 group-hover:opacity-30 transition-opacity duration-500"></div>
+                
+                <div className="flex items-center gap-4 mb-8 relative z-10">
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-pink-500 text-white flex items-center justify-center shadow-md">
+                    <span className="material-symbols-outlined text-sm" style={{"fontVariationSettings":"'FILL' 1"}}>auto_awesome</span>
+                  </div>
+                  <span className="text-2xl font-bold text-gray-900 tracking-tight">Xeno AI CRM</span>
+                </div>
+                <ul className="space-y-4 relative z-10">
+                  <li className="flex items-start gap-4 p-4 rounded-2xl bg-white/80 backdrop-blur-sm border border-indigo-50 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300 cursor-default">
+                    <span className="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center text-xs font-bold text-primary">01</span>
+                    <span className="text-gray-800 font-semibold pt-1">Dynamic customer cohorts synchronized with live behaviors</span>
+                  </li>
+                  <li className="flex items-start gap-4 p-4 rounded-2xl bg-white/80 backdrop-blur-sm border border-indigo-50 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300 cursor-default">
+                    <span className="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center text-xs font-bold text-primary">02</span>
+                    <span className="text-gray-800 font-semibold pt-1">AI-powered segmentation using multi-metric predictive model</span>
+                  </li>
+                  <li className="flex items-start gap-4 p-4 rounded-2xl bg-white/80 backdrop-blur-sm border border-indigo-50 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300 cursor-default">
+                    <span className="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center text-xs font-bold text-primary">03</span>
+                    <span className="text-gray-800 font-semibold pt-1">Hyper-personalized copy variants generated by Copilot</span>
+                  </li>
+                  <li className="flex items-start gap-4 p-4 rounded-2xl bg-white/80 backdrop-blur-sm border border-indigo-50 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300 cursor-default">
+                    <span className="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center text-xs font-bold text-primary">04</span>
+                    <span className="text-gray-800 font-semibold pt-1">Closed-loop revenue attribution connecting SMS clicks to order baskets</span>
+                  </li>
+                  <li className="flex items-start gap-4 p-4 rounded-2xl bg-white/80 backdrop-blur-sm border border-indigo-50 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300 cursor-default">
+                    <span className="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center text-xs font-bold text-primary">05</span>
+                    <span className="text-gray-800 font-semibold pt-1">Unified command center from CRM data upload to final conversion logs</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* AI ANALYSIS WORKFLOW */}
+        <section id="workflow" className="py-24 bg-white relative overflow-hidden">
+          <div className="max-w-5xl mx-auto px-lg relative z-10">
+            <div className="text-center mb-20">
+              <h2 className="reveal text-4xl lg:text-5xl font-black mb-6 tracking-tight text-gray-900">
+                How Xeno AI Understands Your Customers
+              </h2>
+              <p className="reveal text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
+                The continuous lifecycle from database connection to campaign execution.
+              </p>
+            </div>
+
+            <div className="relative pl-4 md:pl-0">
+              <div className="absolute left-8 md:left-[50px] top-4 bottom-4 w-1 bg-gradient-to-b from-primary/10 via-primary/30 to-pink-400/10 rounded-full"></div>
+
+              <div className="space-y-10">
+                {/* Step 1 */}
+                <div className="relative flex items-start gap-8 md:gap-12 group reveal">
+                  <div className="absolute left-8 md:left-[50px] -translate-x-1/2 w-4 h-4 rounded-full bg-white border-4 border-primary shadow-md z-10 top-10 group-hover:scale-150 transition-transform duration-300"></div>
+                  <div className="w-16 md:w-24 shrink-0 hidden md:block"></div>
+                  <div className="flex-1 bg-white p-8 rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl transition-shadow duration-300 ml-12 md:ml-0 flex flex-col md:flex-row gap-6 items-start">
+                    <div className="w-16 h-16 rounded-2xl bg-indigo-50 flex items-center justify-center text-primary shrink-0 shadow-sm">
+                      <span className="material-symbols-outlined text-[32px]">cloud_upload</span>
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-bold text-gray-900 mb-2 tracking-tight">1. Data Ingestion</h3>
+                      <p className="text-gray-600 leading-relaxed">Drop offline order list exports and customer transaction records into the console settings interface. Ingests CSV or parses real-time Shopify/Salesforce fields.</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Step 2 */}
+                <div className="relative flex items-start gap-8 md:gap-12 group reveal" style={{"transitionDelay":"100ms"}}>
+                  <div className="absolute left-8 md:left-[50px] -translate-x-1/2 w-4 h-4 rounded-full bg-white border-4 border-pink-400 shadow-md z-10 top-10 group-hover:scale-150 transition-transform duration-300"></div>
+                  <div className="w-16 md:w-24 shrink-0 hidden md:block"></div>
+                  <div className="flex-1 bg-white p-8 rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl transition-shadow duration-300 ml-12 md:ml-0 flex flex-col md:flex-row gap-6 items-start">
+                    <div className="w-16 h-16 rounded-2xl bg-pink-50 flex items-center justify-center text-pink-500 shrink-0 shadow-sm">
+                      <span className="material-symbols-outlined text-[32px]">analytics</span>
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-bold text-gray-900 mb-2 tracking-tight">2. Customer Analysis</h3>
+                      <p className="text-gray-600 leading-relaxed">Calculates order recurrences, monetary contributions, product affinities, and channels. Uncovers dormant patterns in transactions.</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Step 3 */}
+                <div className="relative flex items-start gap-8 md:gap-12 group reveal" style={{"transitionDelay":"200ms"}}>
+                  <div className="absolute left-8 md:left-[50px] -translate-x-1/2 w-4 h-4 rounded-full bg-white border-4 border-emerald-400 shadow-md z-10 top-10 group-hover:scale-150 transition-transform duration-300"></div>
+                  <div className="w-16 md:w-24 shrink-0 hidden md:block"></div>
+                  <div className="flex-1 bg-white p-8 rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl transition-shadow duration-300 ml-12 md:ml-0 flex flex-col md:flex-row gap-6 items-start">
+                    <div className="w-16 h-16 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-500 shrink-0 shadow-sm">
+                      <span className="material-symbols-outlined text-[32px]">groups</span>
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-bold text-gray-900 mb-2 tracking-tight">3. Audience Discovery</h3>
+                      <p className="text-gray-600 leading-relaxed">Identifies and categorizes cohorts automatically (e.g. VIP, Inactive, Coupon Sensitive, and At Risk Shoppers) along with count metrics.</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Step 4 */}
+                <div className="relative flex items-start gap-8 md:gap-12 group reveal" style={{"transitionDelay":"300ms"}}>
+                  <div className="absolute left-8 md:left-[50px] -translate-x-1/2 w-4 h-4 rounded-full bg-white border-4 border-amber-400 shadow-md z-10 top-10 group-hover:scale-150 transition-transform duration-300"></div>
+                  <div className="w-16 md:w-24 shrink-0 hidden md:block"></div>
+                  <div className="flex-1 bg-white p-8 rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl transition-shadow duration-300 ml-12 md:ml-0 flex flex-col md:flex-row gap-6 items-start">
+                    <div className="w-16 h-16 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-500 shrink-0 shadow-sm">
+                      <span className="material-symbols-outlined text-[32px]">monetization_on</span>
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-bold text-gray-900 mb-2 tracking-tight">4. Opportunity Detection</h3>
+                      <p className="text-gray-600 leading-relaxed">Flags immediate high-ROI operations. Calculates expected conversion levels, revenue size, and model confidence scores.</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Step 5 */}
+                <div className="relative flex items-start gap-8 md:gap-12 group reveal" style={{"transitionDelay":"400ms"}}>
+                  <div className="absolute left-8 md:left-[50px] -translate-x-1/2 w-4 h-4 rounded-full bg-white border-4 border-blue-400 shadow-md z-10 top-10 group-hover:scale-150 transition-transform duration-300"></div>
+                  <div className="w-16 md:w-24 shrink-0 hidden md:block"></div>
+                  <div className="flex-1 bg-white p-8 rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl transition-shadow duration-300 ml-12 md:ml-0 flex flex-col md:flex-row gap-6 items-start">
+                    <div className="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-500 shrink-0 shadow-sm">
+                      <span className="material-symbols-outlined text-[32px]">auto_awesome</span>
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-bold text-gray-900 mb-2 tracking-tight">5. Campaign Recommendation</h3>
+                      <p className="text-gray-600 leading-relaxed">Generates highly targeted messages tailored for each discovered cohort via the interactive Copilot workbench.</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Step 6 */}
+                <div className="relative flex items-start gap-8 md:gap-12 group reveal" style={{"transitionDelay":"500ms"}}>
+                  <div className="absolute left-8 md:left-[50px] -translate-x-1/2 w-4 h-4 rounded-full bg-white border-4 border-purple-400 shadow-md z-10 top-10 group-hover:scale-150 transition-transform duration-300"></div>
+                  <div className="w-16 md:w-24 shrink-0 hidden md:block"></div>
+                  <div className="flex-1 bg-white p-8 rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl transition-shadow duration-300 ml-12 md:ml-0 flex flex-col md:flex-row gap-6 items-start">
+                    <div className="w-16 h-16 rounded-2xl bg-purple-50 flex items-center justify-center text-purple-500 shrink-0 shadow-sm">
+                      <span className="material-symbols-outlined text-[32px]">smartphone</span>
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-bold text-gray-900 mb-2 tracking-tight">6. Channel Recommendation</h3>
+                      <p className="text-gray-600 leading-relaxed">Determines and assigns WhatsApp, SMS, Email, or RCS pathways to ensure optimal deliverability and ROAS parameters.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* AI SEGMENT DISCOVERY */}
+        <section id="segments" className="py-24 bg-[#faf8ff] relative overflow-hidden">
+          <div className="max-w-6xl mx-auto px-lg">
+            <div className="text-center mb-16">
+              <h2 className="text-4xl lg:text-5xl font-black tracking-tight text-gray-900 mb-4">
+                Interactive Segment Discovery
+              </h2>
+              <p className="text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
+                Click a cohort to preview real-time metrics, estimated campaign yields, and recommended actions.
+              </p>
+            </div>
+
+            {/* Segment Selector Tabs */}
+            <div className="flex flex-wrap justify-center gap-3 mb-10">
+              {Object.keys(segmentsData).map((key) => (
+                <button
+                  key={key}
+                  onClick={() => setActiveSegment(key)}
+                  className={`px-5 py-3 rounded-2xl font-bold text-sm flex items-center gap-2 transition-all shadow-sm ${
+                    activeSegment === key
+                      ? "bg-primary text-white scale-105"
+                      : "bg-white text-gray-600 hover:bg-gray-50 border border-gray-200"
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-[18px]">
+                    {segmentsData[key].icon}
+                  </span>
+                  {segmentsData[key].title}
+                </button>
+              ))}
+            </div>
+
+            {/* Interactive Card Detail */}
+            <div className="max-w-3xl mx-auto bg-white rounded-3xl border border-indigo-50 p-8 shadow-xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-full blur-2xl -mr-10 -mt-10 opacity-70"></div>
+              
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 pb-6 border-b border-gray-100">
+                <div>
+                  <h3 className="text-2xl font-black text-gray-900 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-primary text-[28px]">
+                      {segmentsData[activeSegment].icon}
+                    </span>
+                    {segmentsData[activeSegment].title}
+                  </h3>
+                  <p className="text-sm text-gray-500 mt-1">{segmentsData[activeSegment].desc}</p>
+                </div>
+                <span className="px-4 py-2 bg-indigo-50 text-primary rounded-xl font-bold text-sm shadow-sm">
+                  {segmentsData[activeSegment].count}
+                </span>
+              </div>
+
+              {/* Metrics Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+                <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                  <p className="text-xs text-gray-400 font-bold uppercase">Estimated Yield</p>
+                  <p className="text-lg font-black text-gray-900 mt-1">{segmentsData[activeSegment].rev}</p>
+                </div>
+                <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                  <p className="text-xs text-gray-400 font-bold uppercase">Conversion Rate</p>
+                  <p className="text-lg font-black text-emerald-600 mt-1">{segmentsData[activeSegment].conversion}</p>
+                </div>
+                <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                  <p className="text-xs text-gray-400 font-bold uppercase">Accuracy Score</p>
+                  <p className="text-lg font-black text-primary mt-1">{segmentsData[activeSegment].confidence}</p>
+                </div>
+              </div>
+
+              <div className="p-5 bg-indigo-50/50 border border-indigo-100 rounded-2xl">
+                <p className="text-xs text-indigo-500 font-bold uppercase mb-1">Recommended AI Outbound Strategy</p>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                  <p className="font-bold text-gray-800 text-sm sm:text-base">
+                    {segmentsData[activeSegment].campaign}
+                  </p>
+                  <button onClick={onLaunch} className="creative-btn px-5 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap shadow-md hover:scale-105 transition-all">
+                    Launch Campaign
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* AI CAMPAIGN COPILOT WORKBENCH */}
+        <section className="py-24 bg-white relative overflow-hidden">
+          <div className="max-w-6xl mx-auto px-lg">
+            <div className="grid lg:grid-cols-12 gap-12 items-center">
+              
+              <div className="lg:col-span-5 reveal">
+                <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-indigo-50 rounded-full text-xs font-bold text-primary mb-6 border border-indigo-100 shadow-sm">
+                  <span className="material-symbols-outlined text-[16px]">smart_toy</span>
+                  Conversational Execution
+                </span>
+                <h2 className="text-4xl lg:text-5xl font-black mb-6 tracking-tight text-gray-900 leading-tight">
+                  AI Campaign <br />
+                  <span className="hero-gradient-text">Copilot Workbench</span>
+                </h2>
+                <p className="text-lg text-gray-600 mb-8 leading-relaxed">
+                  Connect deeply with your audience. Simply state your campaign goal, select your targets, customize parameters, check ROI estimates, and launch directly.
+                </p>
+
+                {/* Vertical Workbench flow step items */}
+                <div className="space-y-4">
+                  <button 
+                    onClick={() => setSelectedCopilotStep(1)}
+                    className={`w-full text-left p-4 rounded-2xl border transition-all flex items-center gap-4 ${
+                      selectedCopilotStep === 1 
+                        ? "border-primary bg-indigo-50/20 shadow-sm" 
+                        : "border-gray-100 hover:bg-gray-50"
+                    }`}
+                  >
+                    <span className="w-8 h-8 rounded-full bg-indigo-50 text-primary flex items-center justify-center font-bold text-sm">1</span>
+                    <div>
+                      <h4 className="font-bold text-gray-900 text-sm">Define Campaign Goal</h4>
+                      <p className="text-xs text-gray-500">State your high-level objective in plain English</p>
+                    </div>
+                  </button>
+
+                  <button 
+                    onClick={() => setSelectedCopilotStep(2)}
+                    className={`w-full text-left p-4 rounded-2xl border transition-all flex items-center gap-4 ${
+                      selectedCopilotStep === 2 
+                        ? "border-primary bg-indigo-50/20 shadow-sm" 
+                        : "border-gray-100 hover:bg-gray-50"
+                    }`}
+                  >
+                    <span className="w-8 h-8 rounded-full bg-pink-50 text-pink-500 flex items-center justify-center font-bold text-sm">2</span>
+                    <div>
+                      <h4 className="font-bold text-gray-900 text-sm">Audience & Message Matching</h4>
+                      <p className="text-xs text-gray-500">AI picks target segment and drafts dynamic copy</p>
+                    </div>
+                  </button>
+
+                  <button 
+                    onClick={() => setSelectedCopilotStep(3)}
+                    className={`w-full text-left p-4 rounded-2xl border transition-all flex items-center gap-4 ${
+                      selectedCopilotStep === 3 
+                        ? "border-primary bg-indigo-50/20 shadow-sm" 
+                        : "border-gray-100 hover:bg-gray-50"
+                    }`}
+                  >
+                    <span className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center font-bold text-sm">3</span>
+                    <div>
+                      <h4 className="font-bold text-gray-900 text-sm">Channel & ROI Prediction</h4>
+                      <p className="text-xs text-gray-500">Evaluates channels (SMS/WhatsApp) and predicts revenue</p>
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              {/* Live Mockup representation matching Copilot UI */}
+              <div className="lg:col-span-7 reveal bg-gray-50 p-6 rounded-[2rem] border border-gray-200/60 shadow-xl">
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+                  
+                  {/* Top bar */}
+                  <div className="flex justify-between items-center pb-4 border-b border-gray-100 mb-6">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-red-400"></div>
+                      <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
+                      <div className="w-3 h-3 rounded-full bg-green-400"></div>
+                    </div>
+                    <span className="text-xs font-mono font-bold text-gray-400">Copilot Workbench Session</span>
+                  </div>
+
+                  {/* Step Display Area */}
+                  {selectedCopilotStep === 1 && (
+                    <div className="space-y-4">
+                      <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 max-w-[85%] ml-auto">
+                        <p className="text-sm text-gray-600 font-medium">"Draft a winback campaign targeting inactive users who have premium LTV ratings."</p>
+                      </div>
+                      <div className="flex gap-3">
+                        <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold">AI</div>
+                        <div className="bg-indigo-50/40 border border-indigo-100 p-4 rounded-2xl flex-1">
+                          <p className="text-xs text-indigo-500 font-bold uppercase mb-1">Intent Classified</p>
+                          <p className="text-sm text-gray-800 font-medium">Understood. Extracting VIP/Premium tier users with &gt; 60 days inactivity log. Let's select matching customer records.</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedCopilotStep === 2 && (
+                    <div className="space-y-4">
+                      <div className="flex gap-3">
+                        <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold">AI</div>
+                        <div className="bg-indigo-50/40 border border-indigo-100 p-4 rounded-2xl flex-1 space-y-3">
+                          <div>
+                            <p className="text-xs text-indigo-500 font-bold uppercase mb-1">Target Segment Isolated</p>
+                            <p className="text-sm text-gray-800 font-bold">Inactive Premium buyers (1,840 records matching)</p>
+                          </div>
+                          <div className="bg-white p-3 rounded-xl border border-gray-100">
+                            <p className="text-xs text-gray-400 font-bold uppercase mb-1">Generative Draft (WhatsApp)</p>
+                            <p className="text-sm font-medium text-gray-800">"Hey [First_Name], we miss your style! Use code VIP15 for 15% off your next checkout. Valid 48h."</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedCopilotStep === 3 && (
+                    <div className="space-y-4">
+                      <div className="flex gap-3">
+                        <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold">AI</div>
+                        <div className="bg-indigo-50/40 border border-indigo-100 p-4 rounded-2xl flex-1 space-y-4">
+                          <div>
+                            <p className="text-xs text-indigo-500 font-bold uppercase mb-1">Recommended Dispatch Channel</p>
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-green-100 text-green-700 rounded-lg text-xs font-bold">
+                              <span className="material-symbols-outlined text-[14px]">chat</span> WhatsApp Outbound
+                            </span>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="bg-white p-3 rounded-xl border border-gray-100">
+                              <p className="text-[10px] text-gray-400 font-bold">EXPECTED ROI</p>
+                              <p className="text-lg font-black text-gray-900">4.2x</p>
+                            </div>
+                            <div className="bg-white p-3 rounded-xl border border-gray-100">
+                              <p className="text-[10px] text-gray-400 font-bold">EXPECTED REVENUE</p>
+                              <p className="text-lg font-black text-emerald-600">₹142,000</p>
+                            </div>
+                          </div>
+
+                          <button onClick={onLaunch} className="w-full creative-btn py-3 rounded-xl text-xs font-bold text-center shadow-md">
+                            Approve & Launch Campaign
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </section>
+
+        {/* CHANNEL SIMULATION ENGINE */}
+        <section id="simulation" className="py-24 bg-[#faf8ff] relative overflow-hidden">
+          <div className="max-w-6xl mx-auto px-lg">
+            <div className="text-center mb-16">
+              <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-indigo-50 rounded-full text-xs font-bold text-primary mb-4 border border-indigo-100 shadow-sm">
+                <span className="material-symbols-outlined text-[16px]">terminal</span>
+                Communication Infrastructure
+              </span>
+              <h2 className="text-4xl lg:text-5xl font-black tracking-tight text-gray-900 mb-4">
+                Realistic Campaign Delivery Simulation
+              </h2>
+              <p className="text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed">
+                Watch campaigns traverse our simulated carrier pipes in real time. We simulate carrier receipts and user responses.
+              </p>
+            </div>
+
+            {/* Event Tracker Flow */}
+            <div className="max-w-4xl mx-auto bg-white rounded-3xl border border-indigo-100 p-8 shadow-xl mb-10">
+              <div className="flex justify-between items-center relative mb-8">
+                {/* Connector line */}
+                <div className="absolute top-6 left-0 right-0 h-1 bg-gray-100 z-0"></div>
+                <div className={`absolute top-6 left-0 h-1 bg-primary z-10 transition-all duration-500 ${
+                  simulatorStep === 'sent' ? 'w-0' :
+                  simulatorStep === 'delivered' ? 'w-1/4' :
+                  simulatorStep === 'read' ? 'w-1/2' :
+                  simulatorStep === 'clicked' ? 'w-3/4' : 'w-full'
+                }`}></div>
+
+                {/* Steps */}
+                {['sent', 'delivered', 'read', 'clicked', 'converted'].map((step, idx) => (
+                  <button
+                    key={step}
+                    onClick={() => setSimulatorStep(step)}
+                    className="relative z-20 flex flex-col items-center group focus:outline-none"
+                  >
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center border-4 font-bold text-sm transition-all ${
+                      simulatorStep === step
+                        ? "bg-primary border-indigo-200 text-white scale-110"
+                        : "bg-white border-gray-200 text-gray-400 group-hover:border-gray-300"
+                    }`}>
+                      {idx + 1}
+                    </div>
+                    <span className="text-xs font-bold text-gray-500 mt-2 uppercase tracking-wider">{step}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Log Terminal Mockup */}
+              <div className="bg-gray-900 rounded-2xl p-6 font-mono text-xs text-gray-300 shadow-inner relative overflow-hidden">
+                <div className="absolute top-3 right-3 flex items-center gap-1.5">
+                  <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                  <span className="text-[10px] text-emerald-500 font-bold uppercase tracking-wider">Live Logs</span>
+                </div>
+                
+                <p className="text-gray-500 mb-2">// Webhook callbacks & delivery tracking trace logs</p>
+                
+                {simulatorStep === 'sent' && (
+                  <p className="text-indigo-400 font-bold">[INFO] [10:32:01] Outbound dispatch trigger initialized. Parsing 1,840 recipient payloads...</p>
+                )}
+                {simulatorStep === 'delivered' && (
+                  <p className="text-blue-400 font-bold">[CARRIER] [10:32:03] Webhook status callback: DELIVERED to recipient +91 98765 43210.</p>
+                )}
+                {simulatorStep === 'read' && (
+                  <p className="text-yellow-400 font-bold">[USER] [10:32:05] Message read trigger: READ receipt timestamp logged for Campaign ID #CMP-89412.</p>
+                )}
+                {simulatorStep === 'clicked' && (
+                  <p className="text-orange-400 font-bold">[URL] [10:32:08] Click registered on redirect link. Client IP logged: 192.168.1.42.</p>
+                )}
+                {simulatorStep === 'converted' && (
+                  <p className="text-emerald-400 font-bold">[CONVERSION] [10:32:12] Order complete webhook received. Attributed ₹15,400 to WhatsApp Winback campaign #CMP-89412.</p>
+                )}
+                
+                <p className="text-gray-500 mt-2">...</p>
+              </div>
+            </div>
+
+            {/* Differentiator features */}
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="p-5 bg-white border border-gray-100 rounded-2xl hover:shadow-md transition-shadow">
+                <span className="material-symbols-outlined text-primary text-2xl mb-2">webhook</span>
+                <h4 className="font-bold text-gray-900 text-sm mb-1">Webhook Callbacks</h4>
+                <p className="text-xs text-gray-500">Listens and processes immediate carrier delivery receipts.</p>
+              </div>
+
+              <div className="p-5 bg-white border border-gray-100 rounded-2xl hover:shadow-md transition-shadow">
+                <span className="material-symbols-outlined text-pink-500 text-2xl mb-2">done_all</span>
+                <h4 className="font-bold text-gray-900 text-sm mb-1">Delivery Tracking</h4>
+                <p className="text-xs text-gray-500">Tracks exactly when payloads hit carrier networks.</p>
+              </div>
+
+              <div className="p-5 bg-white border border-gray-100 rounded-2xl hover:shadow-md transition-shadow">
+                <span className="material-symbols-outlined text-emerald-500 text-2xl mb-2">visibility</span>
+                <h4 className="font-bold text-gray-900 text-sm mb-1">Read Tracking</h4>
+                <p className="text-xs text-gray-500">Monitors audience open rates for direct SMS and RCS.</p>
+              </div>
+
+              <div className="p-5 bg-white border border-gray-100 rounded-2xl hover:shadow-md transition-shadow">
+                <span className="material-symbols-outlined text-amber-500 text-2xl mb-2">touch_app</span>
+                <h4 className="font-bold text-gray-900 text-sm mb-1">Conversion Tracking</h4>
+                <p className="text-xs text-gray-500">Maps user orders back to campaign click ids automatically.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* CUSTOMER JOURNEY ATTRIBUTION */}
+        <section className="py-24 bg-white relative overflow-hidden">
+          <div className="max-w-6xl mx-auto px-lg">
+            <div className="grid lg:grid-cols-12 gap-12 items-center">
+              <div className="lg:col-span-6 reveal">
+                <h2 className="text-4xl lg:text-5xl font-black mb-6 tracking-tight text-gray-900 leading-tight">
+                  Track Every Single <br />
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-pink-500">Customer Journey</span>
+                </h2>
+                <p className="text-lg text-gray-600 mb-8 leading-relaxed">
+                  Understand exactly which campaign generated revenue. Keep a chronological, timestamped ledger of every touchpoint: Ingestion ➔ Cohort ➔ Sent ➔ Delivered ➔ Read ➔ Clicked ➔ Checkout.
+                </p>
+                <div className="p-5 bg-indigo-50/30 rounded-2xl border border-indigo-100/50">
+                  <p className="text-sm font-bold text-gray-800 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-primary text-[20px]">verified_user</span>
+                    Attributed Conversion Ledger
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">Attribution is credited to the specific campaign variant, channel, and segment, eliminating multi-channel guesswork.</p>
+                </div>
+              </div>
+
+              <div className="lg:col-span-6 reveal bg-[#faf8ff] p-8 rounded-3xl border border-indigo-50 shadow-inner">
+                <h4 className="font-bold text-gray-900 text-sm mb-6 uppercase tracking-wider">Visual Conversion Ledger</h4>
+                
+                <div className="space-y-6 relative pl-6">
+                  {/* Vertical timeline line */}
+                  <div className="absolute left-2.5 top-2 bottom-2 w-0.5 bg-indigo-200"></div>
+
+                  <div className="relative flex gap-4 items-start">
+                    <div className="absolute left-[-22px] w-4 h-4 bg-primary rounded-full border-2 border-white"></div>
+                    <div>
+                      <p className="text-xs text-gray-400 font-mono">10:32:01</p>
+                      <h5 className="font-bold text-gray-900 text-sm">Campaign Sent</h5>
+                      <p className="text-xs text-gray-500 mt-0.5">WhatsApp winback payload dispatched to carrier.</p>
+                    </div>
+                  </div>
+
+                  <div className="relative flex gap-4 items-start">
+                    <div className="absolute left-[-22px] w-4 h-4 bg-pink-500 rounded-full border-2 border-white"></div>
+                    <div>
+                      <p className="text-xs text-gray-400 font-mono">10:32:03</p>
+                      <h5 className="font-bold text-gray-900 text-sm">Delivered & Read</h5>
+                      <p className="text-xs text-gray-500 mt-0.5">Carrier reports successful delivery; client opens message.</p>
+                    </div>
+                  </div>
+
+                  <div className="relative flex gap-4 items-start">
+                    <div className="absolute left-[-22px] w-4 h-4 bg-amber-500 rounded-full border-2 border-white"></div>
+                    <div>
+                      <p className="text-xs text-gray-400 font-mono">10:32:08</p>
+                      <h5 className="font-bold text-gray-900 text-sm">Url Clicked</h5>
+                      <p className="text-xs text-gray-500 mt-0.5">Customer clicks dynamic discount VIP link.</p>
+                    </div>
+                  </div>
+
+                  <div className="relative flex gap-4 items-start">
+                    <div className="absolute left-[-22px] w-4 h-4 bg-emerald-500 rounded-full border-2 border-white animate-pulse"></div>
+                    <div>
+                      <p className="text-xs text-emerald-600 font-mono font-bold">10:32:12</p>
+                      <h5 className="font-bold text-emerald-700 text-sm">Purchase Completed</h5>
+                      <p className="text-xs text-emerald-600 mt-0.5">₹15,400 checkout attributed to WhatsApp Winback #CMP-89412.</p>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Analytics Section Refinement */}
+        <section className="py-24 bg-[#faf8ff] relative overflow-hidden">
+          <div className="max-w-6xl mx-auto px-lg">
+            <div className="flex flex-col lg:flex-row items-center gap-xxl">
+              <div className="reveal lg:w-1/3">
+                <h2 className="font-headline-lg text-headline-lg mb-md">Analytics Built for Impact</h2>
+                <p className="font-body-lg text-body-lg text-on-surface-variant mb-lg">Ditch the vanity metrics. Our dashboard focuses on incremental revenue, attribution clarity, and ROI forecasting.</p>
+                <div className="space-y-md">
+                  <div className="flex items-center gap-sm font-medium text-on-surface">
+                    <span className="material-symbols-outlined text-primary">monitoring</span>
+                    Revenue Attribution Ledger
+                  </div>
+                  <div className="flex items-center gap-sm font-medium text-on-surface">
+                    <span className="material-symbols-outlined text-primary">compare_arrows</span>
+                    Expected vs Actual Performance Comparisons
+                  </div>
+                  <div className="flex items-center gap-sm font-medium text-on-surface">
+                    <span className="material-symbols-outlined text-primary">precision_manufacturing</span>
+                    Outbound Channel Performance
+                  </div>
+                </div>
+              </div>
+              <div className="reveal lg:w-2/3">
+                <div className="bg-white rounded-3xl shadow-2xl border border-outline-variant/50 p-6 transform lg:rotate-2 hover:rotate-0 transition-all duration-500">
+                  {/* Mock Analytics UI block */}
+                  <h4 className="font-bold text-gray-900 text-sm mb-6 uppercase tracking-wider">Attributed Revenue Leaderboard</h4>
+                  
+                  <div className="space-y-4">
+                    <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100 flex justify-between items-center">
+                      <div>
+                        <p className="font-bold text-gray-800 text-sm">WhatsApp VIP Upsell</p>
+                        <p className="text-xs text-gray-400">₹450,000 Opportunity • 24.6% Conv.</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-black text-emerald-600">₹110,700 Generated</p>
+                        <p className="text-xs text-gray-400">98% AI confidence</p>
+                      </div>
+                    </div>
+
+                    <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100 flex justify-between items-center">
+                      <div>
+                        <p className="font-bold text-gray-800 text-sm">Email Winback Offer</p>
+                        <p className="text-xs text-gray-400">₹180,000 Opportunity • 8.2% Conv.</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-black text-emerald-600">₹14,760 Generated</p>
+                        <p className="text-xs text-gray-400">91% AI confidence</p>
+                      </div>
+                    </div>
+
+                    <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100 flex justify-between items-center">
+                      <div>
+                        <p className="font-bold text-gray-800 text-sm">SMS Coupon Re-engage</p>
+                        <p className="text-xs text-gray-400">₹95,000 Opportunity • 14.8% Conv.</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-black text-emerald-600">₹14,060 Generated</p>
+                        <p className="text-xs text-gray-400">88% AI confidence</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* AI-Native Marketing Infrastructure */}
+        <section className="py-xxl bg-on-tertiary-fixed text-on-tertiary relative overflow-hidden">
+          <div className="absolute inset-0 w-full h-full opacity-30" style={{"display":"block"}}>
+            <div id="threejs-container-ANIMATION_6" ref={threeContainerRef} className="w-full h-full"></div>
+          </div>
+          <div className="max-w-container-max mx-auto px-lg relative z-10 text-center">
+            <h2 className="reveal font-headline-lg text-headline-lg mb-md">AI-Native Marketing Infrastructure</h2>
+            <p className="reveal font-body-lg text-body-lg text-on-tertiary/60 max-w-2xl mx-auto mb-xxl">Designed to handle massive volumes of order logs and delivery responses with complete security.</p>
+            <div className="grid md:grid-cols-3 gap-lg">
+              <div className="reveal p-lg bg-white/5 border border-white/10 rounded-2xl backdrop-blur-md">
+                <div className="w-12 h-12 bg-primary/20 rounded-lg flex items-center justify-center text-primary mb-md mx-auto">
+                  <span className="material-symbols-outlined">dataset</span>
+                </div>
+                <h4 className="font-headline-sm text-headline-sm mb-sm">Customer Data Layer</h4>
+                <p className="text-on-tertiary/60 text-body-md">Consolidates files and feeds CRM data directly to modeling modules.</p>
+              </div>
+              <div className="reveal p-lg bg-white/5 border border-white/10 rounded-2xl backdrop-blur-md" style={{"transitionDelay":"100ms"}}>
+                <div className="w-12 h-12 bg-primary/20 rounded-lg flex items-center justify-center text-primary mb-md mx-auto">
+                  <span className="material-symbols-outlined">memory</span>
+                </div>
+                <h4 className="font-headline-sm text-headline-sm mb-sm">AI Intelligence Engine</h4>
+                <p className="text-on-tertiary/60 text-body-md">Models churn, CLV parameters, and auto-discovers optimal outreach audiences.</p>
+              </div>
+              <div className="reveal p-lg bg-white/5 border border-white/10 rounded-2xl backdrop-blur-md" style={{"transitionDelay":"200ms"}}>
+                <div className="w-12 h-12 bg-primary/20 rounded-lg flex items-center justify-center text-primary mb-md mx-auto">
+                  <span className="material-symbols-outlined">device_hub</span>
+                </div>
+                <h4 className="font-headline-sm text-headline-sm mb-sm">Attribution & Optimization</h4>
+                <p className="text-on-tertiary/60 text-body-md">Attributes transaction outcomes back to campaigns and updates model algorithms.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Social Proof Section */}
+        <section className="py-xxl">
+          <div className="max-w-container-max mx-auto px-lg">
+            <div className="text-center mb-xxl">
+              <h2 className="reveal font-headline-lg text-headline-lg mb-md">Trusted by Innovative Brands</h2>
+            </div>
+            <div className="grid md:grid-cols-3 gap-lg">
+              <div className="reveal p-lg bg-white border border-outline-variant/30 rounded-2xl shadow-sm">
+                <div className="flex gap-xs text-primary mb-md">
+                  {Array(5).fill().map((_, i) => (
+                    <span key={i} className="material-symbols-outlined" style={{"fontVariationSettings":"'FILL' 1"}}>star</span>
+                  ))}
+                </div>
+                <p className="font-body-md text-on-surface-variant mb-lg italic">"We recovered ₹120,000 from inactive dormant buyers within the first 14 days of deploying Xeno AI to our workspace."</p>
+                <div className="flex items-center gap-md">
+                  <div className="w-10 h-10 rounded-full bg-surface-container"></div>
+                  <div>
+                    <h5 className="font-medium text-on-surface">Sarah Jenkins</h5>
+                    <p className="text-label-md text-outline uppercase tracking-wider">VP of Growth, TechNova</p>
+                  </div>
+                </div>
+              </div>
+              <div className="reveal p-lg bg-white border border-outline-variant/30 rounded-2xl shadow-sm" style={{"transitionDelay":"100ms"}}>
+                <div className="flex gap-xs text-primary mb-md">
+                  {Array(5).fill().map((_, i) => (
+                    <span key={i} className="material-symbols-outlined" style={{"fontVariationSettings":"'FILL' 1"}}>star</span>
+                  ))}
+                </div>
+                <p className="font-body-md text-on-surface-variant mb-lg italic">"Our VIP campaign conversions shot up by 28% while the AI optimized channel preference automatically, preserving budget."</p>
+                <div className="flex items-center gap-md">
+                  <div className="w-10 h-10 rounded-full bg-surface-container"></div>
+                  <div>
+                    <h5 className="font-medium text-on-surface">Mark Thompson</h5>
+                    <p className="text-label-md text-outline uppercase tracking-wider">CMO, Global Retail Group</p>
+                  </div>
+                </div>
+              </div>
+              <div className="reveal p-lg bg-white border border-outline-variant/30 rounded-2xl shadow-sm" style={{"transitionDelay":"200ms"}}>
+                <div className="flex gap-xs text-primary mb-md">
+                  {Array(5).fill().map((_, i) => (
+                    <span key={i} className="material-symbols-outlined" style={{"fontVariationSettings":"'FILL' 1"}}>star</span>
+                  ))}
+                </div>
+                <p className="font-body-md text-on-surface-variant mb-lg italic">"WhatsApp engagement read-rates improved by 18% instantly. Dispatching via preference models is standard practice now."</p>
+                <div className="flex items-center gap-md">
+                  <div className="w-10 h-10 rounded-full bg-surface-container"></div>
+                  <div>
+                    <h5 className="font-medium text-on-surface">Elena Rodriguez</h5>
+                    <p className="text-label-md text-outline uppercase tracking-wider">Director of AI, SaaSify</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Final CTA */}
+        <section className="py-24 relative overflow-hidden">
+          <div className="absolute inset-0 bg-primary/5"></div>
+          <div className="max-w-6xl mx-auto px-lg relative z-10 text-center">
+            <div className="bg-on-tertiary-fixed rounded-[40px] p-12 md:p-20 text-center text-on-tertiary overflow-hidden relative">
+              <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-primary/30 via-transparent to-transparent"></div>
+              <div className="relative z-10 max-w-3xl mx-auto">
+                <h2 className="reveal text-4xl lg:text-6xl font-black mb-6 tracking-tight">Turn Customer Data Into Revenue Opportunities</h2>
+                <p className="reveal text-lg text-on-tertiary/70 mb-10">Upload your customer data, discover high-value audiences, launch personalized campaigns, and track real revenue impact with AI.</p>
+                <div className="reveal flex flex-col sm:flex-row gap-4 justify-center">
+                  <button onClick={onLaunch} className="bg-primary text-on-primary px-8 py-4 rounded-xl font-bold text-lg hover:scale-105 transition-all shadow-md">
+                    Launch AI Workspace
+                  </button>
+                  <button onClick={onLaunch} className="bg-white/10 border border-white/20 text-on-tertiary px-8 py-4 rounded-xl font-bold text-lg hover:bg-white/20 transition-all">
+                    View Product Walkthrough
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      {/* Footer */}
+      <footer className="bg-surface-container-lowest border-t border-outline-variant/50">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-gutter w-full px-lg py-xxl max-w-container-max mx-auto">
+          <div className="md:col-span-1">
+            <div className="flex items-center gap-sm mb-lg">
+              <Logo className="h-8 w-8 object-contain" />
+              <span className="font-headline-sm text-headline-sm font-black text-on-surface">Xeno AI</span>
+            </div>
+            <p className="font-body-md text-on-surface-variant mb-lg">Precision engineered for high-growth marketing teams.</p>
+          </div>
+          <div>
+            <h5 className="font-label-md text-label-md font-bold uppercase tracking-widest mb-lg text-on-surface">Platform</h5>
+            <ul className="space-y-md">
+              <li><a className="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#intelligence">Customer Intelligence</a></li>
+              <li><a className="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#segments">Audience Discovery</a></li>
+              <li><a className="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#simulation">Channel Simulation</a></li>
+            </ul>
+          </div>
+          <div>
+            <h5 className="font-label-md text-label-md font-bold uppercase tracking-widest mb-lg text-on-surface">Resources</h5>
+            <ul className="space-y-md">
+              <li><a className="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">Documentation</a></li>
+              <li><a className="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">API Reference</a></li>
+              <li><a className="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">AI Best Practices</a></li>
+            </ul>
+          </div>
+          <div>
+            <h5 className="font-label-md text-label-md font-bold uppercase tracking-widest mb-lg text-on-surface">Legal</h5>
+            <ul className="space-y-md">
+              <li><a className="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">Privacy Policy</a></li>
+              <li><a className="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">Terms of Service</a></li>
+              <li><a className="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">Security</a></li>
+            </ul>
+          </div>
+        </div>
+        <div className="max-w-container-max mx-auto px-lg py-lg border-t border-outline-variant/30 flex flex-col md:flex-row justify-between items-center gap-md">
+          <span className="font-label-md text-label-md text-on-surface-variant opacity-80 hover:opacity-100 transition-opacity">© 2024 Xeno AI Marketing. All rights reserved. Precision engineered for growth.</span>
+          <div className="flex gap-md">
+            <a className="text-on-surface-variant hover:text-primary" href="#"><span className="material-symbols-outlined">public</span></a>
+            <a className="text-on-surface-variant hover:text-primary" href="#"><span className="material-symbols-outlined">hub</span></a>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+}

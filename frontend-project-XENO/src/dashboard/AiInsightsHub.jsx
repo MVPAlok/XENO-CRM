@@ -1,0 +1,283 @@
+import React, { useState } from 'react';
+
+export default function AiInsightsHub({ onNavigateToView, onGenerateCampaign, role }) {
+  const [expandedInsightId, setExpandedInsightId] = useState(null);
+
+  const insights = [
+    {
+      id: 'ins-1',
+      type: 'revenue_opportunity',
+      title: 'Revenue Opportunity Found',
+      subtitle: '324 inactive customers cohort',
+      metricLabel: 'Potential Recovery',
+      metricValue: '₹1,20,000',
+      confidence: 94,
+      priority: 'high',
+      suggestedCampaign: '90-Day Win-Back WhatsApp Promo',
+      description: 'AI model scanned purchase logs and identified 324 customers who had 3+ purchases previously but zero activity in the last 90 days. Their similarity to historically recovered cohorts is extremely high.',
+      whyAiFound: [
+        'Average purchase interval exceeded by 45 days (avg: 42 days, current: 87 days).',
+        'Customer satisfaction indicator (NPS equivalent) remained at 8/10 during last purchase.',
+        'High historical response rate to WhatsApp promotional messages (78% read rate).'
+      ],
+      impact: 'Est. conversion rate of 15.4% returning ₹1.2L in gross sales with a margins preservation rate of 82%.',
+      promptText: "Bring back 324 inactive customers who haven't purchased in over 90 days with a win-back offer."
+    },
+    {
+      id: 'ins-2',
+      type: 'churn_risk',
+      title: 'Churn Risk Alert',
+      subtitle: '185 customer profiles showing drop-off',
+      metricLabel: 'Potential Revenue Loss',
+      metricValue: '₹95,000',
+      confidence: 82,
+      priority: 'critical',
+      suggestedCampaign: 'At-Risk Retention Discount',
+      description: 'Predictive churn models identified a cluster of 185 high-value shoppers whose purchase frequency decreased by 45% alongside a decrease in search/browse sessions.',
+      whyAiFound: [
+        'Frequency rate dropped from once every 12 days to once every 32 days.',
+        'Page views and app launches reduced by 58% over the last 30 days.',
+        'Similar patterns observed in 84% of customers who churned in Q1.'
+      ],
+      impact: 'If unaddressed, projected revenue leakage is ₹95,000. Re-engagement has an estimated retention success rate of 64%.',
+      promptText: "Draft a high-converting retention campaign for 185 at-risk customers."
+    },
+    {
+      id: 'ins-3',
+      type: 'segment_growth',
+      title: 'Segment Growth Opportunity',
+      subtitle: 'VIP segment population increased by 12%',
+      metricLabel: 'LTV Uplift Potential',
+      metricValue: '₹75,000',
+      confidence: 98,
+      priority: 'medium',
+      suggestedCampaign: 'VIP Loyalty Rewards Campaign',
+      description: 'Recent purchases pushed 150 customer lifespans into the high-value tier (spending > ₹10,000). AI recommends enrolling them in the VIP tier immediately to lock in loyalty.',
+      whyAiFound: [
+        '150 customers crossed the cumulative ₹10,000 spending threshold last month.',
+        'Average Order Value (AOV) for this group increased by 18% during their last 2 orders.',
+        'High engagement with exclusive premium product lines.'
+      ],
+      impact: 'VIP treatment is predicted to increase purchase frequency by 22% over the next 90 days, adding ₹75,000 to CLV.',
+      promptText: "Draft an early access campaign for 150 VIP customers who spent more than ₹10,000 last month."
+    },
+    {
+      id: 'ins-4',
+      type: 'channel_optimization',
+      title: 'Channel Optimization Boost',
+      subtitle: 'WhatsApp outperforming Email significantly',
+      metricLabel: 'Estimated Revenue Gain',
+      metricValue: '₹42,000',
+      confidence: 94,
+      priority: 'medium',
+      suggestedCampaign: 'Channel Optimization Sweep',
+      description: 'Live performance logs indicate a massive variance in channel responsiveness. Routing customer campaigns from Email to WhatsApp for active cohorts increases revenue attribution.',
+      whyAiFound: [
+        'WhatsApp read rate is 78% compared to Email open rate of 22%.',
+        'Click-through rate (CTR) is 42% on WhatsApp vs 4.5% on Email.',
+        'Customer preferred channel flags have shifted towards WhatsApp for 65% of the database.'
+      ],
+      impact: 'Routing campaign dispatches to WhatsApp increases click rates by 9.3x, leading to an estimated ₹42,000 revenue boost.',
+      promptText: "Optimize channel dispatches for highest conversions by moving inactive targets from Email to WhatsApp."
+    }
+  ];
+
+  const handleTakeAction = (insight) => {
+    if (role === 'Viewer') {
+      alert("Permission Denied: Viewers cannot create or launch campaigns.");
+      return;
+    }
+    onGenerateCampaign(insight.promptText);
+  };
+
+  return (
+    <div className="space-y-8 animate-in fade-in duration-300 pb-12 select-none">
+      {/* Header */}
+      <div className="text-left">
+        <h2 className="text-2xl font-bold text-gray-950 flex items-center gap-2">
+          <span className="material-symbols-outlined text-indigo-600 text-[28px]">psychology</span>
+          AI Insights Hub
+        </h2>
+        <p className="text-xs text-gray-400 font-semibold mt-1">
+          Automated customer behavioral scans, revenue opportunities, and optimization anomalies discovered by Xeno AI.
+        </p>
+      </div>
+
+      {/* Summary Stat Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
+        <div className="bg-white border border-gray-200 p-5 rounded-[2rem] shadow-sm flex items-center gap-4">
+          <div className="p-3 bg-amber-50 rounded-2xl text-amber-600">
+            <span className="material-symbols-outlined text-[24px]">payments</span>
+          </div>
+          <div className="text-left">
+            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Recoverable Rev</span>
+            <span className="text-lg font-black text-gray-900">₹1,20,000</span>
+          </div>
+        </div>
+
+        <div className="bg-white border border-gray-200 p-5 rounded-[2rem] shadow-sm flex items-center gap-4">
+          <div className="p-3 bg-rose-50 rounded-2xl text-rose-600">
+            <span className="material-symbols-outlined text-[24px]">trending_down</span>
+          </div>
+          <div className="text-left">
+            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">At Risk Revenue</span>
+            <span className="text-lg font-black text-rose-600">₹95,000</span>
+          </div>
+        </div>
+
+        <div className="bg-white border border-gray-200 p-5 rounded-[2rem] shadow-sm flex items-center gap-4">
+          <div className="p-3 bg-purple-50 rounded-2xl text-purple-600">
+            <span className="material-symbols-outlined text-[24px]">stars</span>
+          </div>
+          <div className="text-left">
+            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">New VIP Growth</span>
+            <span className="text-lg font-black text-purple-600">+12% Uplift</span>
+          </div>
+        </div>
+
+        <div className="bg-white border border-gray-200 p-5 rounded-[2rem] shadow-sm flex items-center gap-4">
+          <div className="p-3 bg-cyan-50 rounded-2xl text-cyan-600">
+            <span className="material-symbols-outlined text-[24px]">campaign</span>
+          </div>
+          <div className="text-left">
+            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Avg Confidence</span>
+            <span className="text-lg font-black text-cyan-600">92% Match</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Detailed Insights Grid */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        {insights.map((insight) => {
+          const isExpanded = expandedInsightId === insight.id;
+          let glowClass = 'hover:shadow-[0_12px_30px_rgba(79,70,229,0.08)]';
+          let borderGlow = 'hover:border-indigo-200';
+          let typeColor = 'text-indigo-600 bg-indigo-50';
+
+          if (insight.type === 'revenue_opportunity') {
+            glowClass = 'hover:shadow-[0_12px_30px_rgba(245,158,11,0.1)]';
+            borderGlow = 'hover:border-amber-200';
+            typeColor = 'text-amber-700 bg-amber-50';
+          } else if (insight.type === 'churn_risk') {
+            glowClass = 'hover:shadow-[0_12px_30px_rgba(239,68,68,0.12)]';
+            borderGlow = 'hover:border-rose-200';
+            typeColor = 'text-rose-700 bg-rose-50';
+          } else if (insight.type === 'segment_growth') {
+            glowClass = 'hover:shadow-[0_12px_30px_rgba(139,92,246,0.1)]';
+            borderGlow = 'hover:border-purple-200';
+            typeColor = 'text-purple-700 bg-purple-50';
+          } else if (insight.type === 'channel_optimization') {
+            glowClass = 'hover:shadow-[0_12px_30px_rgba(6,182,212,0.1)]';
+            borderGlow = 'hover:border-cyan-200';
+            typeColor = 'text-cyan-700 bg-cyan-50';
+          }
+
+          return (
+            <div
+              key={insight.id}
+              className={`bg-white border border-gray-200 p-6 rounded-[2.5rem] shadow-[0_4px_20px_rgba(0,0,0,0.02)] transition-all duration-300 premium-hover-lift flex flex-col justify-between ${glowClass} ${borderGlow}`}
+            >
+              <div>
+                {/* Header Row */}
+                <div className="flex justify-between items-start mb-4">
+                  <div className="text-left space-y-1">
+                    <span className={`text-[9px] font-black px-2.5 py-1 rounded-md uppercase tracking-wider ${typeColor}`}>
+                      {insight.title}
+                    </span>
+                    <h3 className="text-base font-bold text-gray-950 pt-1">{insight.subtitle}</h3>
+                  </div>
+                  
+                  {/* Confidence Ring */}
+                  <div className="relative w-11 h-11 shrink-0">
+                    <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
+                      <path className="text-gray-100" strokeWidth="3" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                      <path 
+                        className={insight.type === 'churn_risk' ? 'text-rose-500' : 'text-indigo-650'} 
+                        strokeDasharray={`${insight.confidence}, 100`} 
+                        strokeWidth="3" 
+                        strokeLinecap="round" 
+                        stroke="currentColor" 
+                        fill="none" 
+                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" 
+                      />
+                    </svg>
+                    <div className="absolute inset-0 flex items-center justify-center text-[10px] font-black text-gray-900">
+                      {insight.confidence}%
+                    </div>
+                  </div>
+                </div>
+
+                {/* Subtitle Details */}
+                <p className="text-xs text-gray-500 leading-relaxed text-left font-medium">
+                  {insight.description}
+                </p>
+
+                {/* Key Metrics */}
+                <div className="grid grid-cols-2 gap-4 my-5 bg-gray-50/50 border border-gray-100 p-4 rounded-2xl">
+                  <div className="text-left">
+                    <span className="block text-[8px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">{insight.metricLabel}</span>
+                    <span className={`text-xl font-extrabold ${insight.type === 'churn_risk' ? 'text-rose-600' : 'text-indigo-750'}`}>{insight.metricValue}</span>
+                  </div>
+                  <div className="text-left">
+                    <span className="block text-[8px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Suggested Strategy</span>
+                    <span className="text-xs font-bold text-gray-900 block truncate mt-1">{insight.suggestedCampaign}</span>
+                  </div>
+                </div>
+
+                {/* Why AI Found This Collapsed Section */}
+                <div className="border-t border-gray-100 pt-4">
+                  <button
+                    onClick={() => setExpandedInsightId(isExpanded ? null : insight.id)}
+                    className="w-full flex items-center justify-between text-xs font-bold text-indigo-600 hover:text-indigo-850 transition-colors"
+                  >
+                    <span className="flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[16px] animate-pulse">auto_awesome</span>
+                      Why AI Discovered This
+                    </span>
+                    <span className="material-symbols-outlined text-[18px]">
+                      {isExpanded ? 'keyboard_arrow_up' : 'keyboard_arrow_down'}
+                    </span>
+                  </button>
+
+                  {isExpanded && (
+                    <div className="mt-3.5 space-y-2.5 bg-indigo-50/10 border border-indigo-50 rounded-2xl p-4 text-left text-xs font-medium text-gray-600 animate-in slide-in-from-top-2 duration-300">
+                      <div className="space-y-2">
+                        <p className="font-bold text-indigo-950 uppercase text-[9px] tracking-wider mb-1">AI Reasoning Logs</p>
+                        {insight.whyAiFound.map((point, index) => (
+                          <div key={index} className="flex gap-2 items-start">
+                            <span className="text-emerald-500 font-bold">✔</span>
+                            <span className="font-semibold text-gray-600">{point}</span>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="pt-2.5 border-t border-indigo-100/50 mt-1">
+                        <p className="font-bold text-indigo-950 uppercase text-[9px] tracking-wider mb-1">Impact Analysis</p>
+                        <p className="text-gray-500 leading-normal font-semibold">{insight.impact}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Action Bar */}
+              <div className="mt-6 pt-4 border-t border-gray-100 flex items-center justify-between gap-4">
+                <span className="text-[10px] text-gray-400 font-extrabold uppercase tracking-widest">
+                  Confidence: {insight.confidence}% Match
+                </span>
+                
+                <button
+                  onClick={() => handleTakeAction(insight)}
+                  disabled={role === 'Viewer'}
+                  className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-800 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 shadow-md active:scale-95"
+                >
+                  <span className="material-symbols-outlined text-[16px]">rocket_launch</span>
+                  Take Action
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}

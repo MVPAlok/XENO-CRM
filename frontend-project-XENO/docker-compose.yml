@@ -1,0 +1,38 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: xeno-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: xeno
+      POSTGRES_PASSWORD: xeno_password
+      POSTGRES_DB: xeno_campaign_console
+    ports:
+      - "5432:5432"
+    volumes:
+      - xeno_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U xeno -d xeno_campaign_console"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+    container_name: xeno-backend
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    environment:
+      DATABASE_URL: postgresql://xeno:xeno_password@postgres:5432/xeno_campaign_console?schema=public
+      CORS_ORIGIN: http://localhost:5173
+    ports:
+      - "5000:5000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: sh -c "npx prisma migrate deploy && npm run db:seed && npm start"
+
+volumes:
+  xeno_postgres_data:
