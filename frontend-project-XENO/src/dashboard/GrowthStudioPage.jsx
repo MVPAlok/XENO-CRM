@@ -11,12 +11,13 @@ const stages = [
   { id: 'approval', label: 'Launch Approval', icon: 'verified' }
 ];
 
-export default function GrowthStudioPage({ initialPrompt, onLaunchCampaign, role = 'Admin' }) {
+export default function GrowthStudioPage({ initialPrompt, onLaunchCampaign, role = 'Admin', segments = [] }) {
   const navigate = useNavigate();
   const [prompt, setPrompt] = useState(initialPrompt || '');
   const [successData, setSuccessData] = useState(null);
   const [thinking, setThinking] = useState(false);
   const [result, setResult] = useState(null);
+  const [matchedSegmentName, setMatchedSegmentName] = useState('Customers');
   
   // Workflow step index: -1 = not started, 0-6 represent stages
   const [activeStageIndex, setActiveStageIndex] = useState(-1);
@@ -64,61 +65,72 @@ export default function GrowthStudioPage({ initialPrompt, onLaunchCampaign, role
         clearInterval(interval);
         setThinking(false);
         
-        const isVIP = customPrompt.toLowerCase().includes('vip') || customPrompt.toLowerCase().includes('spend');
+        const matchedSegment = segments.find(s => {
+          const sName = s.name.toLowerCase();
+          const cleanPrompt = customPrompt.toLowerCase();
+          if (sName.includes('vip') && (cleanPrompt.includes('vip') || cleanPrompt.includes('high spender') || cleanPrompt.includes('spend'))) return true;
+          if (sName.includes('inactive') && (cleanPrompt.includes('inactive') || cleanPrompt.includes('miss') || cleanPrompt.includes('win-back') || cleanPrompt.includes('3 months') || cleanPrompt.includes('90 days'))) return true;
+          if (sName.includes('recent') && (cleanPrompt.includes('recent') || cleanPrompt.includes('new arrival') || cleanPrompt.includes('engaged'))) return true;
+          if (sName.includes('frequent') && (cleanPrompt.includes('frequent') || cleanPrompt.includes('loyal') || cleanPrompt.includes('many orders'))) return true;
+          if (sName.includes('coupon') && (cleanPrompt.includes('coupon') || cleanPrompt.includes('discount') || cleanPrompt.includes('promo'))) return true;
+          if (sName.includes('risk') && (cleanPrompt.includes('at risk') || cleanPrompt.includes('risk') || cleanPrompt.includes('churn') || cleanPrompt.includes('frequency drop'))) return true;
+          return false;
+        }) || segments[0] || { id: 'seg-default', name: 'Customers', count: 100, revenuePotential: 50000, expectedConversion: '15.0%', confidenceScore: 85, description: 'All database customers.' };
+
+        setMatchedSegmentName(matchedSegment.name);
+
+        const countVal = matchedSegment.count || 0;
+        const potentialVal = matchedSegment.revenuePotential || 0;
+        const expectedConv = matchedSegment.expectedConversion || '15.0%';
+        const roiVal = countVal > 0 ? (potentialVal / Math.max(250, countVal * 0.2)).toFixed(1) + 'x' : '0.0x';
         
-        if (isVIP) {
-          setEditedTitle('Exclusive VIP Privilege');
-          setEditedMessage(
-            "Hi Rahul 👋\n\nAs one of our top VIP shoppers, we are giving you exclusive early access to our Summer Clearance Sale!\n\nUse VIPSECRET at checkout for an extra 15% OFF everything.\n\nAccess expires in 48 hours."
-          );
-          setResult({
-            audience: '150 Customers',
-            reasoning: 'Spent over ₹10,000 in the past month.',
-            channel: 'WhatsApp',
-            channelReason: '98% delivery rate & 85% read rate within this VIP segment.',
-            thoughtProcess: {
-              detected: '150 high-spender VIP customers',
-              historicalRecovery: '24%',
-              bestChannel: 'WhatsApp',
-              conversions: 42,
-              revenue: 75000,
-              roi: '6.2x'
-            },
-            metrics: {
-              reach: 148,
-              readRate: '85%',
-              clickRate: '57%',
-              conversions: 42,
-              revenue: '₹75,000'
-            }
-          });
-        } else {
-          setEditedTitle('We Miss You');
-          setEditedMessage(
-            "Hi Rahul 👋\n\nWe noticed you haven't shopped with us recently.\n\nUse WELCOME20 and enjoy 20% OFF on your next purchase.\n\nOffer expires in 7 days."
-          );
-          setResult({
-            audience: '324 Customers',
-            reasoning: 'No purchases recorded in the last 90 days.',
-            channel: 'WhatsApp',
-            channelReason: 'WhatsApp exhibits the highest historical engagement for inactive cohorts.',
-            thoughtProcess: {
-              detected: '324 inactive customers (90+ days)',
-              historicalRecovery: '14%',
-              bestChannel: 'WhatsApp',
-              conversions: 50,
-              revenue: 120000,
-              roi: '4.8x'
-            },
-            metrics: {
-              reach: 290,
-              readRate: '70%',
-              clickRate: '35%',
-              conversions: 30,
-              revenue: '₹60,000'
-            }
-          });
+        const audienceText = `${countVal.toLocaleString()} Customers`;
+        const reasoningText = matchedSegment.description || 'Targeting matched profiles.';
+        
+        let titleText = 'We Miss You';
+        let messageText = "Hi Rahul 👋\n\nWe noticed you haven't shopped with us recently.\n\nUse WELCOME20 and enjoy 20% OFF on your next purchase.\n\nOffer expires in 7 days.";
+        let channelName = 'WhatsApp';
+        let channelReasonText = 'WhatsApp exhibits the highest historical engagement for inactive cohorts.';
+
+        if (matchedSegment.name.includes('VIP')) {
+          titleText = 'Exclusive VIP Privilege';
+          messageText = "Hi Rahul 👋\n\nAs one of our top VIP shoppers, we are giving you exclusive early access to our Summer Clearance Sale!\n\nUse VIPSECRET at checkout for an extra 15% OFF everything.\n\nAccess expires in 48 hours.";
+          channelReasonText = '98% delivery rate & 85% read rate within this VIP segment.';
+        } else if (matchedSegment.name.includes('At Risk') || matchedSegment.name.includes('Inactive')) {
+          titleText = 'We Miss You';
+          messageText = "Hi Rahul 👋\n\nWe noticed you haven't shopped with us recently.\n\nUse WELCOME20 and enjoy 20% OFF on your next purchase.\n\nOffer expires in 7 days.";
+          channelReasonText = 'WhatsApp/Email exhibits the highest historical engagement for inactive cohorts.';
+        } else if (matchedSegment.name.includes('Coupon')) {
+          titleText = 'Weekend Surprise Promo';
+          messageText = "Hi Rahul 👋\n\nYour special weekend discount COUPON10 is active. Claim 10% off before Sunday night!";
+          channelName = 'RCS';
+          channelReasonText = 'Rich Card RCS delivers rich coupon buttons directly to native phone inbox.';
         }
+
+        setEditedTitle(titleText);
+        setEditedMessage(messageText);
+
+        setResult({
+          audience: audienceText,
+          reasoning: reasoningText,
+          channel: channelName,
+          channelReason: channelReasonText,
+          thoughtProcess: {
+            detected: `${countVal} profiles in ${matchedSegment.name}`,
+            historicalRecovery: expectedConv,
+            bestChannel: channelName,
+            conversions: Math.round(countVal * parseFloat(expectedConv) / 100),
+            revenue: potentialVal,
+            roi: roiVal
+          },
+          metrics: {
+            reach: Math.round(countVal * 0.95),
+            readRate: matchedSegment.name.includes('VIP') ? '85%' : '70%',
+            clickRate: matchedSegment.name.includes('VIP') ? '57%' : '35%',
+            conversions: Math.round(countVal * parseFloat(expectedConv) / 100),
+            revenue: `₹${potentialVal.toLocaleString('en-IN')}`
+          }
+        });
       }
     }, 450);
   };
@@ -141,7 +153,7 @@ export default function GrowthStudioPage({ initialPrompt, onLaunchCampaign, role
     }
 
     const generatedId = `CAMP-${Math.floor(Math.random() * 900) + 100}`;
-    const audience = result.audience.includes('324') ? 'Inactive Customers' : 'VIP Customers';
+    const audience = matchedSegmentName;
 
     onLaunchCampaign({
       id: generatedId,
@@ -152,7 +164,7 @@ export default function GrowthStudioPage({ initialPrompt, onLaunchCampaign, role
       message: editedMessage,
       targetSize: parseInt(result.audience),
       createdBy: 'Growth Studio',
-      predictedRoi: result.audience.includes('324') ? '4.8x' : '6.2x',
+      predictedRoi: result.thoughtProcess.roi,
       expectedRevenue: result.thoughtProcess.revenue,
       metrics: {
         sent: parseInt(result.audience),
@@ -180,7 +192,7 @@ export default function GrowthStudioPage({ initialPrompt, onLaunchCampaign, role
       return;
     }
     const generatedId = `CAMP-${Math.floor(Math.random() * 900) + 100}`;
-    const audience = result.audience.includes('324') ? 'Inactive Customers' : 'VIP Customers';
+    const audience = matchedSegmentName;
 
     onLaunchCampaign({
       id: generatedId,
@@ -191,7 +203,7 @@ export default function GrowthStudioPage({ initialPrompt, onLaunchCampaign, role
       message: editedMessage,
       targetSize: parseInt(result.audience),
       createdBy: 'Growth Studio',
-      predictedRoi: result.audience.includes('324') ? '4.8x' : '6.2x',
+      predictedRoi: result.thoughtProcess.roi,
       expectedRevenue: result.thoughtProcess.revenue,
       metrics: { sent: 0, delivered: 0, read: 0, clicked: 0, converted: 0, revenue: 0 }
     });
@@ -212,7 +224,7 @@ export default function GrowthStudioPage({ initialPrompt, onLaunchCampaign, role
       return;
     }
     const generatedId = `CAMP-${Math.floor(Math.random() * 900) + 100}`;
-    const audience = result.audience.includes('324') ? 'Inactive Customers' : 'VIP Customers';
+    const audience = matchedSegmentName;
 
     onLaunchCampaign({
       id: generatedId,
@@ -223,7 +235,7 @@ export default function GrowthStudioPage({ initialPrompt, onLaunchCampaign, role
       message: editedMessage,
       targetSize: parseInt(result.audience),
       createdBy: 'Growth Studio',
-      predictedRoi: result.audience.includes('324') ? '4.8x' : '6.2x',
+      predictedRoi: result.thoughtProcess.roi,
       expectedRevenue: result.thoughtProcess.revenue,
       metrics: { sent: 0, delivered: 0, read: 0, clicked: 0, converted: 0, revenue: 0 }
     });

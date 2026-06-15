@@ -173,9 +173,11 @@ export default function CsvIngestionCenter({
   return (
     <div className={`w-full ${compact ? '' : 'max-w-4xl mx-auto'}`}>
       {/* Header */}
-      <div className="mb-5 text-left">
-        <h2 className="text-xl md:text-2xl font-bold text-gray-950">Import CSV Dataset</h2>
-        <p className="text-xs text-gray-500 font-medium mt-1 max-w-2xl leading-relaxed">
+      <div className="mb-8 text-center relative z-10">
+        <h2 className="text-2xl md:text-3xl font-black bg-clip-text text-transparent bg-gradient-to-r from-indigo-950 to-gray-700 mb-3 tracking-tight">
+          Import CSV Dataset
+        </h2>
+        <p className="text-xs text-gray-500 font-semibold max-w-xl mx-auto leading-relaxed">
           Upload customer sales CSV exports. The AI engine automatically parses columns, maps attributes,
           and highlights conflicts before ingestion.
         </p>
@@ -186,46 +188,45 @@ export default function CsvIngestionCenter({
           onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
           onDragLeave={() => setIsDragging(false)}
           onDrop={handleDrop}
-          className={`relative rounded-[1.75rem] border border-dashed transition-all duration-300 overflow-hidden ${
+          onClick={() => inputRef.current?.click()}
+          className={`relative rounded-3xl border-2 border-dashed transition-all duration-500 overflow-hidden group cursor-pointer ${
             isDragging
-              ? 'border-indigo-500 bg-indigo-950/90 scale-[1.01]'
-              : 'border-zinc-800 bg-zinc-950'
+              ? 'border-indigo-500 bg-indigo-50/80 scale-[1.02] shadow-2xl shadow-indigo-500/20'
+              : 'border-indigo-100 bg-white/40 hover:bg-white/80 hover:border-indigo-300 shadow-xl shadow-indigo-100/30 hover:shadow-2xl hover:shadow-indigo-200/50'
           }`}
         >
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(99,102,241,0.15),transparent_50%)] pointer-events-none" />
-          <div className="relative px-8 py-14 md:py-16 flex flex-col items-center text-center">
-            <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center mb-5">
-              <span className="material-symbols-outlined text-[24px] text-white">upload</span>
+          <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/50 via-transparent to-purple-50/50 pointer-events-none opacity-50 group-hover:opacity-100 transition-opacity duration-500" />
+          
+          <div className="relative px-8 py-16 md:py-20 flex flex-col items-center text-center">
+            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-6 transition-all duration-500 ${isDragging ? 'bg-indigo-600 scale-110 shadow-lg shadow-indigo-600/30' : 'bg-indigo-50 border border-indigo-100 group-hover:scale-110 group-hover:shadow-md'}`}>
+              <span className={`material-symbols-outlined text-[32px] transition-colors duration-300 ${isDragging ? 'text-white' : 'text-indigo-600 group-hover:text-indigo-700'}`}>
+                cloud_upload
+              </span>
             </div>
-            <h3 className="text-sm font-extrabold text-white mb-2 tracking-wide">Drag &amp; Drop CSV File</h3>
-            <p className="text-xs text-gray-400 font-semibold max-w-md mb-6 leading-relaxed">
+            
+            <h3 className="text-lg font-extrabold text-gray-900 mb-2 tracking-tight group-hover:text-indigo-950 transition-colors">
+              Drop your CSV file here
+            </h3>
+            <p className="text-xs text-gray-500 font-medium max-w-sm mb-8 leading-relaxed group-hover:text-gray-600 transition-colors">
               Supports messy transaction reports from direct sales channels. Max file size: 10MB.
             </p>
 
             <button
               type="button"
-              onClick={() => inputRef.current?.click()}
-              className="px-5 py-2.5 rounded-xl bg-[#18181b] hover:bg-[#27272a] border border-[#3f3f46] text-white text-xs font-bold transition-all shadow-md active:scale-95"
+              onClick={(e) => { e.stopPropagation(); inputRef.current?.click(); }}
+              className="px-6 py-3 rounded-xl bg-gray-900 hover:bg-indigo-600 text-white text-xs font-bold transition-all duration-300 shadow-md hover:shadow-xl hover:shadow-indigo-500/30 active:scale-95 flex items-center gap-2 relative z-10"
             >
+              <span className="material-symbols-outlined text-[18px]">folder_open</span>
               Browse Files
             </button>
 
             <button
               type="button"
-              onClick={handleLoadSamples}
-              className="mt-4 text-[11px] font-bold text-indigo-300 hover:text-indigo-200 transition-colors"
+              onClick={(e) => { e.stopPropagation(); handleLoadSamples(); }}
+              className="mt-6 text-[11px] font-bold text-indigo-500/70 hover:text-indigo-700 transition-colors border-b border-transparent hover:border-indigo-700 pb-0.5 relative z-10"
             >
-              Or load sample customer + order datasets
+              Or load sample datasets to test
             </button>
-
-            <input
-              ref={inputRef}
-              type="file"
-              accept=".csv,text/csv"
-              multiple
-              className="hidden"
-              onChange={(e) => addFiles(e.target.files)}
-            />
           </div>
         </div>
       )}
@@ -424,7 +425,7 @@ export default function CsvIngestionCenter({
             type="button"
             disabled={!canProceed || isBusy}
             onClick={handlePrimaryAction}
-            className="px-8 py-3.5 creative-btn rounded-xl font-bold text-xs disabled:opacity-50 flex items-center gap-2"
+            className="px-8 py-3.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-xl font-bold text-xs shadow-lg hover:shadow-indigo-500/25 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2"
           >
             {isBusy ? (
               <>
@@ -435,7 +436,7 @@ export default function CsvIngestionCenter({
               <>
                 {workspaceId ? 'Import to Workspace' : continueLabel}
                 <span className="material-symbols-outlined text-[16px]">
-                  {workspaceId ? 'cloud_upload' : 'insights'}
+                  {workspaceId ? 'cloud_upload' : 'arrow_forward'}
                 </span>
               </>
             )}

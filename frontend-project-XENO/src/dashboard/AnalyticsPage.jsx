@@ -49,6 +49,38 @@ export default function AnalyticsPage({ campaigns = [], analyticsData = null, is
   const worstCampaign = [...campaigns].sort((a, b) => (a.metrics?.converted || 0) - (b.metrics?.converted || 0))[0];
   const topChannel = [...channelPerformanceData].sort((a, b) => (b.readRate || 0) - (a.readRate || 0))[0];
 
+  const totalRevChange = analyticsData?.kpis?.totalRevenue?.change || '0.0%';
+  const vipCampaigns = campaigns.filter(c => String(c.segment).includes('VIP'));
+  const vipRev = vipCampaigns.reduce((sum, c) => sum + (c.metrics?.revenue || 0), 0);
+  const totalCampaignRev = campaigns.reduce((sum, c) => sum + (c.metrics?.revenue || 0), 0);
+  const vipPct = totalCampaignRev > 0 ? ((vipRev / totalCampaignRev) * 100).toFixed(0) : '0';
+  
+  const waPerformance = channelPerformanceData.find(c => c.channel === 'WhatsApp') || { readRate: 0 };
+  const emPerformance = channelPerformanceData.find(c => c.channel === 'Email') || { readRate: 0 };
+  const waReadPct = waPerformance.readRate || 0;
+  const emReadPct = emPerformance.readRate || 0;
+  const waDiff = Math.max(0, waReadPct - emReadPct).toFixed(0);
+
+  const inactiveCampaigns = campaigns.filter(c => String(c.segment).includes('Inactive'));
+  const inactiveRev = inactiveCampaigns.reduce((sum, c) => sum + (c.metrics?.revenue || 0), 0);
+  
+  const campaignWithRoi = [...campaigns]
+    .map(c => {
+      let rate = 0.05;
+      if (c.channel === 'WhatsApp') rate = 0.20;
+      else if (c.channel === 'SMS') rate = 0.08;
+      else if (c.channel === 'RCS') rate = 0.12;
+      else if (c.channel === 'Email') rate = 0.02;
+      const cost = Math.max(250, Math.floor((c.metrics?.sent || 0) * rate));
+      const roiVal = cost > 0 ? (c.metrics?.revenue || 0) / cost : 0;
+      return { ...c, roiVal };
+    })
+    .sort((a, b) => b.roiVal - a.roiVal)[0];
+
+  const highestRoiText = campaignWithRoi && campaignWithRoi.roiVal > 0 
+    ? `${campaignWithRoi.name} (${campaignWithRoi.roiVal.toFixed(1)}x ROI)`
+    : 'No ROI data yet';
+
   const getMetricLabel = () => {
     if (trendMetric === 'revenue') return 'Revenue (₹)';
     if (trendMetric === 'conversions') return 'Conversions Count';
@@ -77,17 +109,17 @@ export default function AnalyticsPage({ campaigns = [], analyticsData = null, is
             </div>
             
             <p className="text-sm font-medium text-white leading-relaxed">
-              Revenue increased <strong className="text-cyan-300 font-extrabold">18.2%</strong>. VIP campaigns generated <strong className="text-cyan-300 font-extrabold">62%</strong> of total company revenue. WhatsApp outperformed Email by <strong className="text-cyan-300 font-extrabold">28%</strong>. Inactive customer recovery campaigns generated <strong className="text-cyan-300 font-extrabold">₹1,20,000</strong>.
+              Revenue changed by <strong className="text-cyan-300 font-extrabold">{totalRevChange}</strong>. VIP campaigns generated <strong className="text-cyan-300 font-extrabold">{vipPct}%</strong> of total campaign revenue. WhatsApp outperformed Email by <strong className="text-cyan-300 font-extrabold">{waDiff}%</strong> read rate. Inactive customer recovery campaigns generated <strong className="text-cyan-300 font-extrabold">₹{inactiveRev.toLocaleString('en-IN')}</strong>.
             </p>
 
             <div className="bg-indigo-900/40 border border-indigo-850 p-4 rounded-2xl text-[11px] text-indigo-200 leading-relaxed font-medium mt-3">
               <strong className="text-white block uppercase text-[8px] tracking-wider mb-1">AI Recommendation Core</strong>
-              Route SMS dispatches to WhatsApp in Tier-2 regions to prevent 12% carrier bounce rate. Expand VIP rewards segment to capture ₹75k in latent LTV.
+              Optimize VIP rewards segment to capture high customer LTV. Preferred channel analysis suggests prioritizing WhatsApp/Email based on customer preference logs.
             </div>
           </div>
 
           <div className="border-t border-indigo-800 pt-4 mt-6 text-[9px] font-bold text-indigo-400 flex justify-between items-center">
-            <span>Executive Insights compiled 12 mins ago</span>
+            <span>Executive Insights compiled Just Now</span>
             <span className="bg-cyan-500/10 text-cyan-400 px-2 py-0.5 rounded font-bold uppercase tracking-wider">AI Verified</span>
           </div>
         </div>
@@ -106,7 +138,20 @@ export default function AnalyticsPage({ campaigns = [], analyticsData = null, is
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                   Top Segment
                 </span>
-                <span className="font-extrabold text-gray-900 bg-gray-50 border border-gray-150 px-2.5 py-0.5 rounded-md">VIP Customers (28.6% CR)</span>
+                <span className="font-extrabold text-gray-900 bg-gray-50 border border-gray-150 px-2.5 py-0.5 rounded-md">
+                  {(() => {
+                    const topSegment = campaigns.length > 0 
+                      ? [...campaigns].sort((a, b) => {
+                          const aCR = a.metrics?.sent > 0 ? (a.metrics?.converted / a.metrics?.sent) * 100 : 0;
+                          const bCR = b.metrics?.sent > 0 ? (b.metrics?.converted / b.metrics?.sent) * 100 : 0;
+                          return bCR - aCR;
+                        })[0]
+                      : null;
+                    return topSegment 
+                      ? `${topSegment.segment} (${(topSegment.metrics?.sent > 0 ? (topSegment.metrics?.converted / topSegment.metrics?.sent) * 100 : 0).toFixed(1)}% CR)`
+                      : 'No segment data yet';
+                  })()}
+                </span>
               </div>
 
               <div className="flex justify-between items-center text-xs">
@@ -130,7 +175,7 @@ export default function AnalyticsPage({ campaigns = [], analyticsData = null, is
               </div>
 
               <div className="flex justify-between items-center text-xs">
-                <span className="text-gray-450 font-bold flex items-center gap-1.5">
+                <span className="text-gray-455 font-bold flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
                   Most Effective Channel
                 </span>
@@ -140,11 +185,11 @@ export default function AnalyticsPage({ campaigns = [], analyticsData = null, is
               </div>
 
               <div className="flex justify-between items-center text-xs">
-                <span className="text-gray-450 font-bold flex items-center gap-1.5">
+                <span className="text-gray-455 font-bold flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
                   Highest ROI Trend
                 </span>
-                <span className="font-extrabold text-indigo-700 bg-indigo-50 border border-indigo-100/50 px-2.5 py-0.5 rounded-md">VIP Loyalty Rewards (6.2x Projected)</span>
+                <span className="font-extrabold text-indigo-700 bg-indigo-50 border border-indigo-100/50 px-2.5 py-0.5 rounded-md">{highestRoiText}</span>
               </div>
             </div>
           </div>

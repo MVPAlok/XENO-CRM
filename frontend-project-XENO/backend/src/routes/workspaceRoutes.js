@@ -10,7 +10,7 @@ import {
 import { overview } from '../controllers/analyticsController.js';
 import { getCustomer, listCustomers } from '../controllers/customerController.js';
 import { importCsv } from '../controllers/importController.js';
-import { createSegment, listSegments } from '../controllers/segmentController.js';
+import { createSegment, listSegments, previewSegment } from '../controllers/segmentController.js';
 import { createCampaign, getCampaigns, simulatorControl, simulatorLogs, simulatorMetrics } from '../controllers/campaignController.js';
 import { createConversation, listConversations, sendMessage } from '../controllers/chatController.js';
 import { markRead, notifications, unreadCount } from '../controllers/notificationController.js';
@@ -49,6 +49,7 @@ router.get('/:workspaceId/customers/:customerId', getCustomer);
 
 router.get('/:workspaceId/segments', listSegments);
 router.post('/:workspaceId/segments', requireWorkspaceRole('OWNER', 'ADMIN', 'MEMBER'), validateBody(createSegmentSchema), createSegment);
+router.post('/:workspaceId/segments/preview', requireWorkspaceMember, previewSegment);
 
 router.post(
   '/:workspaceId/imports',

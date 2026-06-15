@@ -22,6 +22,13 @@ export default function DashboardOverview({
   role = 'Admin',
   isLoading = false
 }) {
+  const inactiveSegment = segments.find(s => s.name === 'Inactive Customers') || { count: 0, revenuePotential: 0, expectedConversion: '0%' };
+  const vipSegment = segments.find(s => s.name === 'VIP Customers') || { count: 0, revenuePotential: 0, expectedConversion: '0%' };
+  const atRiskSegment = segments.find(s => s.name === 'At Risk Customers') || { count: 0, revenuePotential: 0, expectedConversion: '0%' };
+
+  const inactiveRoi = inactiveSegment.count > 0 ? (inactiveSegment.revenuePotential / Math.max(250, inactiveSegment.count * 0.2)).toFixed(1) + 'x' : '0.0x';
+  const recoverablePotentialTotal = inactiveSegment.revenuePotential + atRiskSegment.revenuePotential + vipSegment.revenuePotential;
+
   const [activeSegment, setActiveSegment] = useState(segments[0] || null);
   const [hoveredNode, setHoveredNode] = useState(null);
 
@@ -33,11 +40,11 @@ export default function DashboardOverview({
 
   // Recommendation action handlers
   const handleGenerateWinback = () => {
-    onGenerateCampaign("Bring back 324 inactive customers who haven't purchased in over 90 days with a win-back offer.");
+    onGenerateCampaign(`Bring back ${inactiveSegment.count} inactive customers who haven't purchased in over 90 days with a win-back offer.`);
   };
 
   const handleGenerateVIP = () => {
-    onGenerateCampaign("Draft an early access campaign for 150 VIP customers who spent more than ₹10,000 last month.");
+    onGenerateCampaign(`Draft an early access campaign for ${vipSegment.count} VIP customers who spent more than ₹25,000.`);
   };
 
   // Sparkline SVG path helpers
@@ -274,24 +281,23 @@ export default function DashboardOverview({
               detected in <span className="hero-gradient-text font-bold">Inactive Cohorts</span>
             </h1>
             
-            {/* Description */}
-            <p className="text-[13px] text-gray-500 font-medium leading-[1.65] mb-7 max-w-lg">
-              Our models identified <strong className="text-gray-700">324 shoppers</strong> disengaged for 90+ days. Launching the suggested smart win-back campaign is projected to recover <strong className="text-gray-700">₹75,000</strong> with high confidence.
+                <p className="text-[13px] text-gray-500 font-medium leading-[1.65] mb-7 max-w-lg">
+              Our models identified <strong className="text-gray-700">{inactiveSegment.count} shoppers</strong> disengaged for 90+ days. Launching the suggested smart win-back campaign is projected to recover <strong className="text-gray-700">₹{inactiveSegment.revenuePotential.toLocaleString('en-IN')}</strong> with high confidence.
             </p>
 
             {/* Metric row – cleaner card feel */}
             <div className="flex items-center gap-0 bg-gray-50/80 border border-gray-100 rounded-xl mb-7 max-w-md overflow-hidden">
               <div className="flex-1 px-4 py-3 border-r border-gray-100/80">
                 <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-[0.14em] mb-1.5">Recoverable Rev</span>
-                <span className="text-xl font-bold text-gray-900">₹1,20,000</span>
+                <span className="text-xl font-bold text-gray-900">₹{inactiveSegment.revenuePotential.toLocaleString('en-IN')}</span>
               </div>
               <div className="flex-1 px-4 py-3 border-r border-gray-100/80">
                 <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-[0.14em] mb-1.5">Est. Conversion</span>
-                <span className="text-xl font-bold text-emerald-600">15.4%</span>
+                <span className="text-xl font-bold text-emerald-600">{inactiveSegment.expectedConversion}</span>
               </div>
               <div className="flex-1 px-4 py-3">
                 <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-[0.14em] mb-1.5">Expected ROI</span>
-                <span className="text-xl font-bold text-indigo-600">4.8x</span>
+                <span className="text-xl font-bold text-indigo-650">{inactiveRoi}</span>
               </div>
             </div>
           </div>
@@ -402,22 +408,22 @@ export default function DashboardOverview({
           <div className="mt-4 min-h-[24px] text-center">
             {hoveredNode === 'inactive' && (
               <span className="text-xs font-bold text-amber-600 animate-in fade-in">
-                Inactive Shoppers: 324 • Click to Optimize
+                Inactive Shoppers: {inactiveSegment.count} • Click to Optimize
               </span>
             )}
             {hoveredNode === 'vip' && (
               <span className="text-xs font-bold text-purple-650 animate-in fade-in">
-                VIP Shoppers: 150 • Early Access Target
+                VIP Shoppers: {vipSegment.count} • Early Access Target
               </span>
             )}
             {hoveredNode === 'active' && (
               <span className="text-xs font-bold text-emerald-600 animate-in fade-in">
-                Recent Buyers: 540 • Highly Engaged
+                Recent Buyers: {segments.find(s => s.name === 'Recent Buyers')?.count || 0} • Highly Engaged
               </span>
             )}
             {hoveredNode === 'coupon' && (
               <span className="text-xs font-bold text-pink-500 animate-in fade-in">
-                Coupon Sensitive: 680 • Active Promos
+                Coupon Sensitive: {segments.find(s => s.name === 'Coupon Sensitive Customers')?.count || 0} • Active Promos
               </span>
             )}
             {!hoveredNode && (
@@ -499,7 +505,7 @@ export default function DashboardOverview({
             <h2 className="text-xl font-bold text-gray-900 tracking-tight">AI Priority Actions</h2>
           </div>
           <span className="text-[11px] text-gray-805 font-bold bg-indigo-50 border border-indigo-100 text-indigo-700 px-3 py-1.5 rounded-full">
-            Recoverable Portfolio Potential: ₹2,90,000
+            Recoverable Portfolio Potential: ₹{recoverablePotentialTotal.toLocaleString('en-IN')}
           </span>
         </div>
 
@@ -513,23 +519,23 @@ export default function DashboardOverview({
                 🔥 HIGH PRIORITY
               </span>
               <span className="text-[11px] font-bold text-gray-800 bg-gray-100 px-2.5 py-1 rounded-md">
-                94% Confidence
+                {inactiveSegment.confidenceScore || 94}% Confidence
               </span>
             </div>
             
             <div className="relative z-10 mb-6">
               <h3 className="text-lg font-bold text-gray-900 mb-1">Launch Win-Back Campaign</h3>
-              <p className="text-xs text-gray-400 font-semibold">Targeting 324 inactive customers who haven't purchased in over 90 days.</p>
+              <p className="text-xs text-gray-400 font-semibold">Targeting {inactiveSegment.count} inactive customers who haven't purchased in over 90 days.</p>
             </div>
 
             <div className="relative z-10 flex items-center justify-between mb-6">
               <div>
                 <span className="block text-[8px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Recoverable Revenue</span>
-                <span className="text-2xl font-black text-gray-900">₹1,20,000</span>
+                <span className="text-2xl font-black text-gray-900">₹{inactiveSegment.revenuePotential.toLocaleString('en-IN')}</span>
               </div>
               <div className="text-right">
                 <span className="block text-[8px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Est. ROI</span>
-                <span className="text-xs font-bold text-amber-600 block mt-1">4.8x Expected</span>
+                <span className="text-xs font-bold text-amber-600 block mt-1">{inactiveRoi} Expected</span>
               </div>
             </div>
 
@@ -551,19 +557,19 @@ export default function DashboardOverview({
                 ⚠ CHURN RISK DETECTED
               </span>
               <span className="text-[11px] font-bold text-gray-800 bg-gray-100 px-2.5 py-1 rounded-md">
-                82% Confidence
+                {atRiskSegment.confidenceScore || 82}% Confidence
               </span>
             </div>
             
             <div className="relative z-10 mb-6">
               <h3 className="text-lg font-bold text-gray-900 mb-1">Retention Campaign</h3>
-              <p className="text-xs text-gray-400 font-semibold">Targeting 185 at-risk customers whose frequency dropped 45%.</p>
+              <p className="text-xs text-gray-400 font-semibold">Targeting {atRiskSegment.count} at-risk customers whose frequency dropped.</p>
             </div>
 
             <div className="relative z-10 flex items-center justify-between mb-6">
               <div>
                 <span className="block text-[8px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Potential Rev Loss</span>
-                <span className="text-2xl font-black text-rose-600">₹95,000</span>
+                <span className="text-2xl font-black text-rose-600">₹{atRiskSegment.revenuePotential.toLocaleString('en-IN')}</span>
               </div>
               <div className="text-right">
                 <span className="block text-[8px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Preferred Channel</span>
@@ -572,7 +578,7 @@ export default function DashboardOverview({
             </div>
 
             <button
-              onClick={() => onGenerateCampaign("Draft a high-converting retention campaign for 185 at-risk customers.")}
+              onClick={() => onGenerateCampaign(`Draft a high-converting retention campaign for ${atRiskSegment.count} at-risk customers.`)}
               disabled={role === 'Viewer'}
               className="relative z-10 w-full py-3 bg-indigo-600 hover:bg-indigo-800 disabled:opacity-50 text-white font-bold text-xs rounded-xl transition-all shadow-md active:scale-95"
             >
@@ -589,23 +595,25 @@ export default function DashboardOverview({
                 📈 VIP UPSELL
               </span>
               <span className="text-[11px] font-bold text-gray-800 bg-gray-100 px-2.5 py-1 rounded-md">
-                98% Confidence
+                {vipSegment.confidenceScore || 98}% Confidence
               </span>
             </div>
             
             <div className="relative z-10 mb-6">
               <h3 className="text-lg font-bold text-gray-900 mb-1">VIP Opportunity</h3>
-              <p className="text-xs text-gray-400 font-semibold">Targeting 150 top customers spending over ₹10,000 recently.</p>
+              <p className="text-xs text-gray-400 font-semibold">Targeting {vipSegment.count} top customers spending over ₹25,000.</p>
             </div>
 
             <div className="relative z-10 flex items-center justify-between mb-6">
               <div>
                 <span className="block text-[8px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Uplift Value</span>
-                <span className="text-2xl font-black text-purple-750">₹75,000</span>
+                <span className="text-2xl font-black text-purple-750">₹{vipSegment.revenuePotential.toLocaleString('en-IN')}</span>
               </div>
               <div className="text-right">
                 <span className="block text-[8px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Est. ROI</span>
-                <span className="text-xs font-bold text-purple-650 block mt-1">6.2x Expected</span>
+                <span className="text-xs font-bold text-purple-650 block mt-1">
+                  {vipSegment.count > 0 ? (vipSegment.revenuePotential / Math.max(250, vipSegment.count * 0.25)).toFixed(1) + 'x' : '0.0x'} Expected
+                </span>
               </div>
             </div>
 
@@ -658,7 +666,7 @@ export default function DashboardOverview({
               <div className="text-xs text-left">
                 <p className="font-bold text-gray-800">Latest AI Analysis Run</p>
                 <p className="text-gray-500 font-semibold mt-0.5">
-                  Calculated CLV and purchase intervals for 25k+ profiles. 6 segments generated.
+                  Calculated CLV and purchase intervals for {workspace?.stats?.customers || 'all'} profiles. {segments.length} segments generated.
                 </p>
                 <span className="text-[9px] text-gray-400 font-bold block mt-1">Status: Optimized Today</span>
               </div>
@@ -672,7 +680,7 @@ export default function DashboardOverview({
               <div className="text-xs text-left">
                 <p className="font-bold text-gray-800">Newest Created Segment</p>
                 <p className="text-gray-500 font-semibold mt-0.5">
-                  <strong className="text-amber-700">Inactive Customers</strong> (324 customers, ₹1,20,000 potential recoverable revenue).
+                  <strong className="text-amber-700">{inactiveSegment.name}</strong> ({inactiveSegment.count} customers, ₹{inactiveSegment.revenuePotential.toLocaleString('en-IN')} potential recoverable revenue).
                 </p>
                 <span className="text-[9px] text-gray-400 font-bold block mt-1">Status: Ready to Target</span>
               </div>

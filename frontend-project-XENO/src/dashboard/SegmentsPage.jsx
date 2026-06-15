@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const getSegmentDetails = (segment) => ({
   rule: segment.rules?.length
@@ -19,9 +20,10 @@ const getSegmentCrmDetails = (segment) => ({
 export default function SegmentsPage({ onNavigateToView, onGenerateCampaign, segments = [], isLoading = false }) {
   const [hoveredCardId, setHoveredCardId] = useState(null);
   const [expandedSegmentId, setExpandedSegmentId] = useState(null);
+  const navigate = useNavigate();
   
   const handleViewCustomers = (segment) => {
-    onNavigateToView('customers');
+    navigate(`/dashboard/customers?segmentId=${segment.id}`);
   };
 
   const handleGenerateCampaign = (segment) => {

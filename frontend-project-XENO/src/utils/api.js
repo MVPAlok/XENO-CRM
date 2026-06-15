@@ -186,11 +186,36 @@ export const workspaceAPI = {
 export const customerAPI = {
   list: (wsId, query = '') => apiRequest(`/workspaces/${wsId}/customers${query}`, { method: 'GET' }),
   get: (wsId, custId) => apiRequest(`/workspaces/${wsId}/customers/${custId}`, { method: 'GET' }),
+  filter: (wsId, filters = {}) => {
+    const params = new URLSearchParams();
+    if (filters.page) params.set('page', String(filters.page));
+    if (filters.limit) params.set('limit', String(filters.limit));
+    if (filters.search) params.set('search', filters.search);
+    if (filters.sort) params.set('sort', filters.sort);
+    if (filters.order) params.set('order', filters.order);
+    if (filters.status) params.set('status', filters.status);
+    if (filters.city) params.set('city', filters.city);
+    if (filters.channel) params.set('channel', filters.channel);
+    if (filters.spendMin) params.set('spendMin', String(filters.spendMin));
+    if (filters.spendMax) params.set('spendMax', String(filters.spendMax));
+    if (filters.ordersMin) params.set('ordersMin', String(filters.ordersMin));
+    if (filters.ordersMax) params.set('ordersMax', String(filters.ordersMax));
+    if (filters.lastPurchaseWithin) params.set('lastPurchaseWithin', String(filters.lastPurchaseWithin));
+    if (filters.lastPurchaseOver) params.set('lastPurchaseOver', String(filters.lastPurchaseOver));
+    if (filters.segmentId) params.set('segmentId', filters.segmentId);
+    const qs = params.toString();
+    return apiRequest(`/workspaces/${wsId}/customers${qs ? `?${qs}` : ''}`, { method: 'GET' });
+  },
 };
 
 export const segmentAPI = {
   list: (wsId) => apiRequest(`/workspaces/${wsId}/segments`, { method: 'GET' }),
   create: (wsId, data) => apiRequest(`/workspaces/${wsId}/segments`, { method: 'POST', body: JSON.stringify(data) }),
+  preview: (wsId, rules, page = 1, limit = 25) =>
+    apiRequest(`/workspaces/${wsId}/segments/preview`, {
+      method: 'POST',
+      body: JSON.stringify({ rules, page, limit }),
+    }),
 };
 
 export const campaignAPI = {

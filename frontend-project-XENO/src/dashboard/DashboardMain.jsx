@@ -627,6 +627,7 @@ export default function DashboardMain({ user, onBack }) {
                     navigate('/dashboard/growth-studio');
                   }}
                   role={role}
+                  insights={analyticsData?.insights || []}
                 />
               }
             />
@@ -635,7 +636,7 @@ export default function DashboardMain({ user, onBack }) {
               path="customers" 
               element={
                 <CustomersPage 
-                  customers={customers}
+                  workspaceId={activeWorkspaceId}
                   activeCustomerId={activeCustomerId}
                   clearActiveCustomerId={() => setActiveCustomerId(null)}
                 />
@@ -651,7 +652,6 @@ export default function DashboardMain({ user, onBack }) {
                     setCopilotPrompt(text);
                     navigate('/dashboard/growth-studio');
                   }}
-                  customers={customers}
                   segments={segments}
                   isLoading={skeletonLoading}
                 />
@@ -665,6 +665,7 @@ export default function DashboardMain({ user, onBack }) {
                   initialPrompt={copilotPrompt}
                   onLaunchCampaign={handleLaunchNewCampaign}
                   role={role}
+                  segments={segments}
                 />
               } 
             />

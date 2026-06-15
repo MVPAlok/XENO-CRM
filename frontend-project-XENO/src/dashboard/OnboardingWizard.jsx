@@ -266,7 +266,7 @@ export default function OnboardingWizard({ onComplete, initialStep = 1, onCancel
               <button
                 onClick={() => setStep(2)}
                 disabled={!brandName.trim()}
-                className="px-8 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs shadow-md transition-all hover:scale-[1.01] flex items-center gap-2 disabled:opacity-50"
+                className="px-8 py-3.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-xl font-bold text-xs shadow-lg hover:shadow-indigo-500/25 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2"
               >
                 Create Workspace
                 <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
@@ -466,7 +466,7 @@ export default function OnboardingWizard({ onComplete, initialStep = 1, onCancel
               <button
                 onClick={handleLaunch}
                 disabled={isSubmitting}
-                className="px-8 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs shadow-md transition-all hover:scale-[1.01] flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
+                className="px-8 py-3.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-xl font-bold text-xs shadow-lg hover:shadow-indigo-500/25 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2"
               >
                 {isSubmitting ? (
                   <>

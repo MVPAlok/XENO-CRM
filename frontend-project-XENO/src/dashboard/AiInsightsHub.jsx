@@ -1,86 +1,19 @@
 import React, { useState } from 'react';
 
-export default function AiInsightsHub({ onNavigateToView, onGenerateCampaign, role }) {
+export default function AiInsightsHub({ onNavigateToView, onGenerateCampaign, role, insights = [] }) {
   const [expandedInsightId, setExpandedInsightId] = useState(null);
 
-  const insights = [
-    {
-      id: 'ins-1',
-      type: 'revenue_opportunity',
-      title: 'Revenue Opportunity Found',
-      subtitle: '324 inactive customers cohort',
-      metricLabel: 'Potential Recovery',
-      metricValue: '₹1,20,000',
-      confidence: 94,
-      priority: 'high',
-      suggestedCampaign: '90-Day Win-Back WhatsApp Promo',
-      description: 'AI model scanned purchase logs and identified 324 customers who had 3+ purchases previously but zero activity in the last 90 days. Their similarity to historically recovered cohorts is extremely high.',
-      whyAiFound: [
-        'Average purchase interval exceeded by 45 days (avg: 42 days, current: 87 days).',
-        'Customer satisfaction indicator (NPS equivalent) remained at 8/10 during last purchase.',
-        'High historical response rate to WhatsApp promotional messages (78% read rate).'
-      ],
-      impact: 'Est. conversion rate of 15.4% returning ₹1.2L in gross sales with a margins preservation rate of 82%.',
-      promptText: "Bring back 324 inactive customers who haven't purchased in over 90 days with a win-back offer."
-    },
-    {
-      id: 'ins-2',
-      type: 'churn_risk',
-      title: 'Churn Risk Alert',
-      subtitle: '185 customer profiles showing drop-off',
-      metricLabel: 'Potential Revenue Loss',
-      metricValue: '₹95,000',
-      confidence: 82,
-      priority: 'critical',
-      suggestedCampaign: 'At-Risk Retention Discount',
-      description: 'Predictive churn models identified a cluster of 185 high-value shoppers whose purchase frequency decreased by 45% alongside a decrease in search/browse sessions.',
-      whyAiFound: [
-        'Frequency rate dropped from once every 12 days to once every 32 days.',
-        'Page views and app launches reduced by 58% over the last 30 days.',
-        'Similar patterns observed in 84% of customers who churned in Q1.'
-      ],
-      impact: 'If unaddressed, projected revenue leakage is ₹95,000. Re-engagement has an estimated retention success rate of 64%.',
-      promptText: "Draft a high-converting retention campaign for 185 at-risk customers."
-    },
-    {
-      id: 'ins-3',
-      type: 'segment_growth',
-      title: 'Segment Growth Opportunity',
-      subtitle: 'VIP segment population increased by 12%',
-      metricLabel: 'LTV Uplift Potential',
-      metricValue: '₹75,000',
-      confidence: 98,
-      priority: 'medium',
-      suggestedCampaign: 'VIP Loyalty Rewards Campaign',
-      description: 'Recent purchases pushed 150 customer lifespans into the high-value tier (spending > ₹10,000). AI recommends enrolling them in the VIP tier immediately to lock in loyalty.',
-      whyAiFound: [
-        '150 customers crossed the cumulative ₹10,000 spending threshold last month.',
-        'Average Order Value (AOV) for this group increased by 18% during their last 2 orders.',
-        'High engagement with exclusive premium product lines.'
-      ],
-      impact: 'VIP treatment is predicted to increase purchase frequency by 22% over the next 90 days, adding ₹75,000 to CLV.',
-      promptText: "Draft an early access campaign for 150 VIP customers who spent more than ₹10,000 last month."
-    },
-    {
-      id: 'ins-4',
-      type: 'channel_optimization',
-      title: 'Channel Optimization Boost',
-      subtitle: 'WhatsApp outperforming Email significantly',
-      metricLabel: 'Estimated Revenue Gain',
-      metricValue: '₹42,000',
-      confidence: 94,
-      priority: 'medium',
-      suggestedCampaign: 'Channel Optimization Sweep',
-      description: 'Live performance logs indicate a massive variance in channel responsiveness. Routing customer campaigns from Email to WhatsApp for active cohorts increases revenue attribution.',
-      whyAiFound: [
-        'WhatsApp read rate is 78% compared to Email open rate of 22%.',
-        'Click-through rate (CTR) is 42% on WhatsApp vs 4.5% on Email.',
-        'Customer preferred channel flags have shifted towards WhatsApp for 65% of the database.'
-      ],
-      impact: 'Routing campaign dispatches to WhatsApp increases click rates by 9.3x, leading to an estimated ₹42,000 revenue boost.',
-      promptText: "Optimize channel dispatches for highest conversions by moving inactive targets from Email to WhatsApp."
-    }
-  ];
+  const opportunity = insights.find(i => i.type === 'revenue_opportunity');
+  const churn = insights.find(i => i.type === 'churn_risk');
+  const growth = insights.find(i => i.type === 'segment_growth');
+  
+  const recoverableRev = opportunity?.metricValue || '₹0';
+  const atRiskRev = churn?.metricValue || '₹0';
+  const vipGrowth = opportunity ? `+12% Uplift` : '—'; // segment growth proxy
+  
+  const avgConfidence = insights.length > 0 
+    ? Math.round(insights.reduce((sum, i) => sum + (i.confidence || 0), 0) / insights.length) 
+    : 0;
 
   const handleTakeAction = (insight) => {
     if (role === 'Viewer') {
@@ -94,7 +27,7 @@ export default function AiInsightsHub({ onNavigateToView, onGenerateCampaign, ro
     <div className="space-y-8 animate-in fade-in duration-300 pb-12 select-none">
       {/* Header */}
       <div className="text-left">
-        <h2 className="text-2xl font-bold text-gray-950 flex items-center gap-2">
+        <h2 className="text-2xl font-bold text-gray-955 flex items-center gap-2">
           <span className="material-symbols-outlined text-indigo-600 text-[28px]">psychology</span>
           AI Insights Hub
         </h2>
@@ -111,7 +44,7 @@ export default function AiInsightsHub({ onNavigateToView, onGenerateCampaign, ro
           </div>
           <div className="text-left">
             <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Recoverable Rev</span>
-            <span className="text-lg font-black text-gray-900">₹1,20,000</span>
+            <span className="text-lg font-black text-gray-900">{recoverableRev}</span>
           </div>
         </div>
 
@@ -121,7 +54,7 @@ export default function AiInsightsHub({ onNavigateToView, onGenerateCampaign, ro
           </div>
           <div className="text-left">
             <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">At Risk Revenue</span>
-            <span className="text-lg font-black text-rose-600">₹95,000</span>
+            <span className="text-lg font-black text-rose-600">{atRiskRev}</span>
           </div>
         </div>
 
@@ -131,7 +64,7 @@ export default function AiInsightsHub({ onNavigateToView, onGenerateCampaign, ro
           </div>
           <div className="text-left">
             <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">New VIP Growth</span>
-            <span className="text-lg font-black text-purple-600">+12% Uplift</span>
+            <span className="text-lg font-black text-purple-600">{vipGrowth}</span>
           </div>
         </div>
 
@@ -141,7 +74,7 @@ export default function AiInsightsHub({ onNavigateToView, onGenerateCampaign, ro
           </div>
           <div className="text-left">
             <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Avg Confidence</span>
-            <span className="text-lg font-black text-cyan-600">92% Match</span>
+            <span className="text-lg font-black text-cyan-600">{avgConfidence}% Match</span>
           </div>
         </div>
       </div>

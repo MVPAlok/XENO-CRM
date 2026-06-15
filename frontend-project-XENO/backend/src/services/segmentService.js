@@ -131,18 +131,132 @@ export const getCustomerFacts = async (workspaceId) => {
   }));
 };
 
-export const matchCustomersForRules = async (workspaceId, rules = []) => {
-  const facts = await getCustomerFacts(workspaceId);
-  if (!rules.length) return facts.map((fact) => fact.customer);
+export const buildPrismaWhereFromRules = (workspaceId, rules = []) => {
+  const where = { workspaceId, deletedAt: null };
+  const AND = [];
 
-  return facts
-    .filter((fact) =>
-      rules.every((rule) => {
-        const field = normalizeField(rule.field);
-        return compare(fact[field], rule.operator, rule.value);
-      })
-    )
-    .map((fact) => fact.customer);
+  for (const rule of rules) {
+    const field = normalizeField(rule.field);
+    const op = String(rule.operator || '=').toLowerCase();
+    const rawValue = String(rule.value);
+
+    if (field === 'city') {
+      if (op === '=' || op === 'equals' || op === 'eq') {
+        AND.push({ city: { equals: rawValue, mode: 'insensitive' } });
+      } else if (op === '!=' || op === 'not_equals' || op === 'neq') {
+        AND.push({ city: { not: { equals: rawValue, mode: 'insensitive' } } });
+      }
+      continue;
+    }
+
+    if (field === 'couponSensitive') {
+      // couponSensitive requires order-level check, fall back to in-memory
+      continue;
+    }
+
+    // Numeric fields: totalSpend, lastPurchaseDays (recencyDays), orderCount (totalOrders)
+    const numericValue = Number(rawValue);
+    if (!Number.isFinite(numericValue)) continue;
+
+    let dbField;
+    if (field === 'totalSpend') dbField = 'totalSpend';
+    else if (field === 'lastPurchaseDays') dbField = 'recencyDays';
+    else if (field === 'orderCount') dbField = 'totalOrders';
+    else continue;
+
+    if (op === '>' || op === 'gt') AND.push({ [dbField]: { gt: numericValue } });
+    else if (op === '>=' || op === 'gte') AND.push({ [dbField]: { gte: numericValue } });
+    else if (op === '<' || op === 'lt') AND.push({ [dbField]: { lt: numericValue } });
+    else if (op === '<=' || op === 'lte') AND.push({ [dbField]: { lte: numericValue } });
+    else if (op === '=' || op === 'equals' || op === 'eq') AND.push({ [dbField]: { equals: numericValue } });
+    else if (op === '!=' || op === 'not_equals' || op === 'neq') AND.push({ [dbField]: { not: numericValue } });
+  }
+
+  if (AND.length) where.AND = AND;
+  return where;
+};
+
+// Check if any rules require in-memory filtering (e.g. couponSensitive)
+const needsInMemoryFilter = (rules = []) =>
+  rules.some((rule) => normalizeField(rule.field) === 'couponSensitive');
+
+export const matchCustomersForRules = async (workspaceId, rules = []) => {
+  // If rules include couponSensitive, we must use in-memory approach
+  if (needsInMemoryFilter(rules)) {
+    const facts = await getCustomerFacts(workspaceId);
+    if (!rules.length) return facts.map((fact) => fact.customer);
+    return facts
+      .filter((fact) =>
+        rules.every((rule) => {
+          const field = normalizeField(rule.field);
+          return compare(fact[field], rule.operator, rule.value);
+        })
+      )
+      .map((fact) => fact.customer);
+  }
+
+  // Pure DB-level filtering for all other rules
+  const where = buildPrismaWhereFromRules(workspaceId, rules);
+  return prisma.customer.findMany({ where });
+};
+
+export const paginatedMatchForSegment = async (workspaceId, rules = [], { page = 1, limit = 25 } = {}) => {
+  const skip = (page - 1) * limit;
+
+  if (needsInMemoryFilter(rules)) {
+    // Fall back to in-memory for couponSensitive rules
+    const allMatched = await matchCustomersForRules(workspaceId, rules);
+    const total = allMatched.length;
+    const customers = allMatched.slice(skip, skip + limit);
+    const totalSpendSum = allMatched.reduce((sum, c) => sum + toNumber(c.totalSpend), 0);
+    const avgOrderValue = total > 0
+      ? allMatched.reduce((sum, c) => sum + toNumber(c.averageOrderValue), 0) / total
+      : 0;
+    return {
+      customers,
+      total,
+      page,
+      limit,
+      totalPages: Math.max(Math.ceil(total / limit), 1),
+      aggregates: {
+        totalSpend: Math.round(totalSpendSum),
+        avgOrderValue: Math.round(avgOrderValue),
+        avgRecencyDays: total > 0
+          ? Math.round(allMatched.reduce((sum, c) => sum + (c.recencyDays || 0), 0) / total)
+          : 0,
+      },
+    };
+  }
+
+  const where = buildPrismaWhereFromRules(workspaceId, rules);
+
+  const [customers, total, agg] = await Promise.all([
+    prisma.customer.findMany({
+      where,
+      orderBy: { updatedAt: 'desc' },
+      skip,
+      take: limit,
+    }),
+    prisma.customer.count({ where }),
+    prisma.customer.aggregate({
+      where,
+      _sum: { totalSpend: true },
+      _avg: { averageOrderValue: true, recencyDays: true },
+    }),
+  ]);
+
+  return {
+    customers,
+    total,
+    page,
+    limit,
+    totalPages: Math.max(Math.ceil(total / limit), 1),
+    aggregates: {
+      totalSpend: Math.round(toNumber(agg._sum.totalSpend)),
+      avgOrderValue: Math.round(toNumber(agg._avg.averageOrderValue)),
+      avgRecencyDays: Math.round(toNumber(agg._avg.recencyDays)),
+    },
+  };
 };
 
 export const enrichSegment = async (segment, index = 0) => {
@@ -151,17 +265,17 @@ export const enrichSegment = async (segment, index = 0) => {
   const count = customers.length;
   const revenuePotential = Math.round(customers.reduce((sum, customer) => sum + toNumber(customer.clv), 0) * 0.18);
   const avgSpend = count > 0 ? customers.reduce((sum, customer) => sum + toNumber(customer.totalSpend), 0) / count : 0;
-  const baseConversion = segment.name.includes('VIP')
-    ? 28.6
-    : segment.name.includes('Frequent')
-      ? 31.2
-      : segment.name.includes('Recent')
-        ? 22.1
-        : segment.name.includes('Inactive')
-          ? 15.4
-          : segment.name.includes('At Risk')
-            ? 12.8
-            : 18.9;
+  
+  const avgRecency = count > 0 ? customers.reduce((sum, c) => sum + (c.recencyDays ?? 90), 0) / count : 90;
+  const avgFreq = count > 0 ? customers.reduce((sum, c) => sum + toNumber(c.purchaseFrequency), 0) / count : 1;
+  const freshness = 1 / (1 + avgRecency / 45);
+  const freqFactor = Math.min(5, avgFreq) / 5;
+  const computedConversion = (0.05 + 0.35 * freshness * (0.3 + 0.7 * freqFactor)) * 100;
+  const baseConversion = Math.min(85.0, Math.max(2.5, computedConversion));
+
+  const totalCustomersInWorkspace = await prisma.customer.count({ where: { workspaceId: segment.workspaceId, deletedAt: null } });
+  const sampleSizeFactor = totalCustomersInWorkspace > 0 ? Math.min(25, (count / totalCustomersInWorkspace) * 100) : 0;
+  const confidenceScore = Math.min(99, Math.max(60, Math.round(65 + Math.min(15, sampleSizeFactor) + Math.min(19, avgFreq * 3.5))));
 
   return {
     id: segment.id,
@@ -172,7 +286,7 @@ export const enrichSegment = async (segment, index = 0) => {
     count,
     revenuePotential,
     expectedConversion: `${baseConversion.toFixed(1)}%`,
-    confidenceScore: Math.min(99, Math.max(72, Math.round(82 + count / 20 + avgSpend / 50000))),
+    confidenceScore,
     color: COLORS[index % COLORS.length],
     createdAt: segment.createdAt,
     updatedAt: segment.updatedAt,
