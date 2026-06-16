@@ -35,7 +35,14 @@ export default function App() {
       if (accessToken) {
         try {
           if (accessToken === 'demo_access_token') {
-            clearSessionTokens();
+            setUser({
+              id: 'demo-user-id',
+              email: 'demo@xeno.ai',
+              firstName: 'Demo',
+              lastName: 'User',
+              role: 'ADMIN',
+              avatarUrl: 'https://api.dicebear.com/7.x/initials/svg?seed=Demo%20User'
+            });
           } else {
             const data = await authAPI.getMe();
             if (data.success && data.user && mounted) {
