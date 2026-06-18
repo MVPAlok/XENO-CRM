@@ -1,6 +1,6 @@
 const API_ROOT =
   import.meta.env.VITE_API_URL ||
-  (import.meta.env.DEV ? '/api/v1' : 'http://localhost:5000/api/v1');
+  (import.meta.env.DEV ? '/api/v1' : 'https://xeno-crm-fcjc.onrender.com/api/v1');
 const AUTH_BASE = `${API_ROOT}/auth`;
 
 // --- OFFLINE DEMO MODE DATA & HANDLERS ---
